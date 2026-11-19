@@ -126,41 +126,51 @@ export function RegisterForm() {
 
   return (
     <div className="grid gap-5">
-      <div
-        role="radiogroup"
-        aria-label="Account type"
-        className="grid grid-cols-3 gap-2"
-      >
-        {ROLES.map((option) => {
-          const active = role === option.value;
-          return (
-            <button
-              key={option.value}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              onClick={() => setRole(option.value)}
-              className={cn(
-                "rounded-[8px] border-2 border-ink p-2.5 text-left transition-colors",
-                active
-                  ? "bg-lime text-[#060605] shadow-offset-sm"
-                  : "bg-surface text-ink-soft hover:bg-secondary hover:text-foreground",
-              )}
-            >
-              <span className="font-heading text-xs font-extrabold tracking-[-0.02em] sm:text-sm">
-                {option.label}
-              </span>
-              <span
+      <div className="grid gap-2">
+        <div className="flex items-center justify-between">
+          <Label className="text-xs font-semibold">
+            Select account role
+          </Label>
+          <span className="font-mono text-[9px] uppercase tracking-[0.08em] text-ink-soft">
+            Determines your dashboard & permissions
+          </span>
+        </div>
+        <div
+          role="radiogroup"
+          aria-label="Account role"
+          className="grid grid-cols-3 gap-2"
+        >
+          {ROLES.map((option) => {
+            const active = role === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                onClick={() => setRole(option.value)}
                 className={cn(
-                  "mt-0.5 block text-[10px] leading-snug sm:text-[11px]",
-                  active ? "text-black/70" : "text-ink-soft",
+                  "rounded-[8px] border-2 border-ink p-2.5 text-left transition-colors",
+                  active
+                    ? "bg-lime text-[#060605] shadow-offset-sm"
+                    : "bg-surface text-ink-soft hover:bg-secondary hover:text-foreground",
                 )}
               >
-                {option.note}
-              </span>
-            </button>
-          );
-        })}
+                <span className="font-heading text-xs font-extrabold tracking-[-0.02em] sm:text-sm">
+                  {option.label}
+                </span>
+                <span
+                  className={cn(
+                    "mt-0.5 block text-[10px] leading-snug sm:text-[11px]",
+                    active ? "text-black/70" : "text-ink-soft",
+                  )}
+                >
+                  {option.note}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <GoogleButton
