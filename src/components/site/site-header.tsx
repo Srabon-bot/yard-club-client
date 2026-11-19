@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Image from "next/image";
+import { useRouter, usePathname } from "next/navigation";
 import { Menu, Search } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -26,6 +28,7 @@ import { ThemeToggle } from "@/components/site/theme-toggle";
 import { mainNav } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { ROLE_HOME, usePreviewRole, type PreviewRole } from "@/components/preview-role";
+import { useSession, signOut } from "@/lib/auth-client";
 
 const PROFILES: Record<Exclude<PreviewRole, "guest">, string> = {
   customer: "/dashboard/profile",
@@ -33,16 +36,42 @@ const PROFILES: Record<Exclude<PreviewRole, "guest">, string> = {
   admin: "/admin/profile",
 };
 
-const PEOPLE: Record<Exclude<PreviewRole, "guest">, { name: string; initials: string; meta: string }> = {
-  customer: { name: "Tanvir Ahmed", initials: "TA", meta: "Customer · Dhanmondi" },
-  owner: { name: "Rafiul Islam", initials: "RI", meta: "Owner · 3 listings" },
-  admin: { name: "Ayesha Karim", initials: "AK", meta: "Admin · Yardclub" },
+const PEOPLE: Record<
+  Exclude<PreviewRole, "guest">,
+  { name: string; initials: string; meta: string; image?: string | null }
+> = {
+  customer: { name: "Tanvir Ahmed", initials: "TA", meta: "Customer · Dhanmondi", image: null },
+  owner: { name: "Rafiul Islam", initials: "RI", meta: "Owner · 3 listings", image: null },
+  admin: { name: "Ayesha Karim", initials: "AK", meta: "Admin · Yardclub", image: null },
 };
 
 export function SiteHeader() {
+  const router = useRouter();
   const pathname = usePathname();
+  const { data: session } = useSession();
   const { role: previewRole, setRole } = usePreviewRole();
   const [open, setOpen] = useState(false);
+
+  // If live session exists, prioritize live session user
+  const liveUser = session?.user as
+    | {
+        id?: string;
+        name?: string;
+        email?: string;
+        image?: string | null;
+        role?: string;
+      }
+    | undefined;
+
+  const sessionRole: PreviewRole | null =
+    liveUser?.role === "admin"
+      ? "admin"
+      : liveUser?.role === "owner"
+        ? "owner"
+        : liveUser?.role === "customer"
+          ? "customer"
+          : null;
+
   const routeRole: PreviewRole | null = pathname.startsWith("/admin")
     ? "admin"
     : pathname.startsWith("/owner")
@@ -50,9 +79,41 @@ export function SiteHeader() {
       : pathname.startsWith("/dashboard")
         ? "customer"
         : null;
-  const role = routeRole ?? previewRole;
-  const guest = role === "guest";
-  const person = guest ? null : PEOPLE[role];
+
+  const role: PreviewRole = sessionRole ?? routeRole ?? previewRole;
+  const guest = !session && role === "guest";
+
+  const getInitials = (name?: string, fallback = "YC") => {
+    if (!name) return fallback;
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
+
+  const person = guest
+    ? null
+    : liveUser
+      ? {
+          name: liveUser.name || "User",
+          initials: getInitials(liveUser.name),
+          meta: `${(liveUser.role || "customer").toUpperCase()} · ${liveUser.email}`,
+          image: liveUser.image || null,
+        }
+      : PEOPLE[role as Exclude<PreviewRole, "guest">];
+
+  const handleSignOut = async () => {
+    if (session) {
+      try {
+        await signOut();
+        toast.success("Signed out successfully");
+      } catch {
+        toast.error("Error signing out");
+      }
+    }
+    setRole("guest");
+    setOpen(false);
+    router.push("/");
+  };
 
   return (
     <header
@@ -127,24 +188,44 @@ export function SiteHeader() {
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="grid size-11 place-items-center rounded-full border-2 border-ink bg-lime font-mono text-xs font-bold text-primary-foreground shadow-offset-sm transition-transform hover:-translate-y-0.5"
+                    className="relative grid size-11 place-items-center overflow-hidden rounded-full border-2 border-ink bg-lime font-mono text-xs font-bold text-primary-foreground shadow-offset-sm transition-transform hover:-translate-y-0.5"
                     aria-label={`Account menu for ${person?.name}`}
                   >
-                    {person?.initials}
+                    {person?.image ? (
+                      <Image
+                        src={person.image}
+                        alt={person.name}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      person?.initials
+                    )}
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
                   sideOffset={8}
-                  className="w-60 rounded-lg border-2 border-ink shadow-offset-sm"
+                  className="w-64 rounded-lg border-2 border-ink shadow-offset-sm"
                 >
-                  <DropdownMenuLabel className="flex items-center gap-2 py-2">
-                    <span className="grid size-9 place-items-center rounded-full border-2 border-ink bg-secondary font-mono text-[11px] font-bold">
-                      {person?.initials}
+                  <DropdownMenuLabel className="flex items-center gap-2.5 py-2.5">
+                    <span className="relative grid size-10 shrink-0 place-items-center overflow-hidden rounded-full border-2 border-ink bg-secondary font-mono text-xs font-bold">
+                      {person?.image ? (
+                        <Image
+                          src={person.image}
+                          alt={person.name}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      ) : (
+                        person?.initials
+                      )}
                     </span>
-                    <span className="grid">
-                      <span className="text-sm font-semibold">{person?.name}</span>
-                      <span className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
+                    <span className="grid min-w-0">
+                      <span className="truncate text-sm font-semibold">{person?.name}</span>
+                      <span className="truncate font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
                         {person?.meta}
                       </span>
                     </span>
@@ -161,7 +242,7 @@ export function SiteHeader() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="cursor-pointer font-medium text-destructive focus:text-destructive"
-                    onSelect={() => setRole("guest")}
+                    onSelect={handleSignOut}
                   >
                     Sign out
                   </DropdownMenuItem>
@@ -255,10 +336,7 @@ export function SiteHeader() {
                     <Button
                       variant="ghost"
                       className="h-11 justify-start rounded-md font-semibold text-destructive"
-                      onClick={() => {
-                        setRole("guest");
-                        setOpen(false);
-                      }}
+                      onClick={handleSignOut}
                     >
                       Sign out
                     </Button>
