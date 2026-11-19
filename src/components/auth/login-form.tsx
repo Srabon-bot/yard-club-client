@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { authClient } from "@/lib/auth-client";
 
 export function GoogleMark({ className }: { className?: string }) {
   return (
@@ -55,27 +56,68 @@ export function GoogleButton({ label }: { label: string }) {
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextUrl = searchParams.get("next");
+
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const data = {
-      email: formData.get("email") as string,
-      password: formData.get("password") as string,
-      remember: formData.get("remember") === "on",
-    };
+    const email = (formData.get("email") as string)?.trim().toLowerCase();
+    const password = formData.get("password") as string;
+    const rememberMe = formData.get("remember") === "on";
 
-    console.log("[Login Form Data]:", data);
+    if (!email || !password) {
+      toast.error("Please provide both email and password.");
+      return;
+    }
 
     setLoading(true);
-    window.setTimeout(() => {
-      toast.success("Welcome back", {
-        description: `Signed in as ${data.email}. Opening dashboard.`,
+
+    try {
+      const result = await authClient.signIn.email({
+        email,
+        password,
+        rememberMe,
       });
-      router.push("/dashboard");
-    }, 600);
+
+      if (result.error) {
+        toast.error("Sign in failed", {
+          description:
+            result.error.message || "Invalid credentials. Please verify your email and password.",
+        });
+        setLoading(false);
+        return;
+      }
+
+      const user = result.data?.user as
+        | { role?: string; name?: string }
+        | undefined;
+      const role = user?.role || "customer";
+
+      toast.success("Welcome back!", {
+        description: `Signed in as ${user?.name || email}.`,
+      });
+
+      // Redirect to nextUrl if requested, otherwise navigate to role-specific dashboard
+      if (nextUrl) {
+        router.push(nextUrl);
+      } else if (role === "admin") {
+        router.push("/admin");
+      } else if (role === "owner") {
+        router.push("/owner");
+      } else {
+        router.push("/dashboard");
+      }
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Something went wrong during sign in.";
+      toast.error("Sign in error", { description: message });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -94,7 +136,7 @@ export function LoginForm() {
         <span className="h-px flex-1 bg-ink/15" />
       </div>
 
-      <form className="grid gap-4" onSubmit={handleSubmit}>
+      <form className="grid gap-4" onSubmit={handleLogin}>
         <div className="grid gap-1.5">
           <Label htmlFor="login-email" className="text-xs font-semibold">
             Email
@@ -162,6 +204,7 @@ export function LoginForm() {
           <input
             type="checkbox"
             name="remember"
+            defaultChecked
             className="size-4 accent-[var(--lime)]"
           />
           Keep me signed in on this device
