@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
@@ -97,8 +98,14 @@ async function Receipt({
       <article className="print-receipt mt-6 overflow-hidden rounded-[10px] border-2 border-ink bg-surface shadow-offset">
         <header className="flex flex-wrap items-start justify-between gap-4 border-b-2 border-ink p-5 sm:p-6">
           <div className="flex items-center gap-2.5">
-            <span className="grid size-9 place-items-center rounded-[6px] border-2 border-ink bg-lime font-mono text-[13px] font-bold text-[#060605]">
-              YC
+            <span className="relative grid size-9 shrink-0 place-items-center overflow-hidden rounded-[6px]">
+              <Image
+                src="/images/yard-club-logo.png"
+                alt="Yardclub"
+                width={36}
+                height={36}
+                className="size-9 object-contain"
+              />
             </span>
             <div>
               <p className="font-heading text-xl font-extrabold leading-none tracking-[-0.05em]">

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { XLogo } from "@/components/site/logo";
 import { NewsletterForm } from "@/components/site/newsletter-form";
@@ -12,9 +13,15 @@ export function SiteFooter() {
       <div className="container-page pt-14 pb-8">
         <div className="grid gap-10 lg:grid-cols-[1.1fr_2.2fr] lg:gap-16">
           <div className="grid content-start gap-5">
-            <Link href="/" className="inline-flex items-center gap-2.5" aria-label="Yardclub home">
-              <span className="grid size-9 place-items-center rounded-[6px] border-2 border-[#060605] bg-lime font-mono text-[13px] font-bold text-[#060605]">
-                YC
+            <Link href="/" className="group inline-flex items-center gap-2.5" aria-label="Yardclub home">
+              <span className="relative grid shrink-0 place-items-center overflow-hidden rounded-[8px] transition-transform duration-150 group-hover:-translate-y-0.5">
+                <Image
+                  src="/images/yard-club-logo.png"
+                  alt="Yardclub"
+                  width={36}
+                  height={36}
+                  className="size-9 object-contain"
+                />
               </span>
               <span className="font-heading text-2xl font-extrabold leading-none tracking-[-0.05em]">
                 yardclub<span className="text-lime">.</span>

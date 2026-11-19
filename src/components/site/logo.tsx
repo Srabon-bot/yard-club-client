@@ -1,12 +1,15 @@
+import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 export function Logo({
   className,
   markOnly = false,
+  size = 36,
 }: {
   className?: string;
   markOnly?: boolean;
+  size?: number;
 }) {
   return (
     <Link
@@ -14,8 +17,15 @@ export function Logo({
       aria-label="Yardclub home"
       className={cn("group inline-flex items-center gap-2.5", className)}
     >
-      <span className="grid size-9 shrink-0 place-items-center rounded-[6px] border-2 border-ink bg-lime font-mono text-[13px] font-bold text-primary-foreground shadow-offset-sm transition-transform duration-150 group-hover:-translate-y-0.5 group-hover:shadow-[4px_4px_0_var(--ink)]">
-        YC
+      <span className="relative grid shrink-0 place-items-center overflow-hidden rounded-[8px] transition-transform duration-150 group-hover:-translate-y-0.5">
+        <Image
+          src="/images/yard-club-logo.png"
+          alt="Yardclub"
+          width={size}
+          height={size}
+          priority
+          className="size-9 object-contain drop-shadow-[2px_2px_0_var(--ink)]"
+        />
       </span>
       {!markOnly && (
         <span className="font-heading text-[1.35rem] font-extrabold leading-none tracking-[-0.05em]">
