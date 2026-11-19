@@ -1,21 +1,151 @@
 import type { Metadata } from "next";
-import { PhasePlaceholder } from "@/components/site/phase-placeholder";
+import { UsersRound } from "lucide-react";
+import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import {
+  DashboardHeading,
+  DataTable,
+  EmptyState,
+  FilterTabs,
+  TablePager,
+} from "@/components/dashboard/parts";
+import { StatusBadge } from "@/components/site/status-badge";
+import { Button } from "@/components/ui/button";
+import { listUsers } from "@/lib/data/users";
+import { formatDate } from "@/lib/format";
+import type { UserRole } from "@/lib/types";
 
-export const metadata: Metadata = { title: 'All users' };
+export const metadata: Metadata = { title: "All users" };
 
-export default function Page() {
+const ROLE_TONE: Record<UserRole, "green" | "blue" | "amber"> = {
+  customer: "green",
+  owner: "blue",
+  admin: "amber",
+};
+
+const PER_PAGE = 8;
+
+export default async function AdminUsersPage({
+  searchParams,
+}: PageProps<"/admin/users">) {
+  const sp = await searchParams;
+  const q = typeof sp.q === "string" ? sp.q : "";
+  const rawRole = typeof sp.role === "string" ? sp.role : "all";
+  const role = rawRole as UserRole | "all";
+  const page = Math.max(1, Number(sp.page ?? "1"));
+
+  const result = await listUsers({ q, role, page, perPage: PER_PAGE });
+
+  const roleParam = role === "all" ? undefined : role;
+  const qParam = q || undefined;
+
   return (
-    <PhasePlaceholder
-      phase="08"
-      title='Accounts and roles'
-      description='Searchable user directory with role filters, join dates, status and suspend or restore actions.'
-      sections={[
-      'Search and role filters',
-      'Server-side pagination',
-      'Role and status chips',
-      'Suspend and restore dialogs',
-      ]}
-      parent={{ label: 'Overview', href: '/admin' }}
-    />
+    <DashboardShell>
+      <div className="grid gap-6">
+        <DashboardHeading
+          eyebrow="Admin"
+          title="Accounts and roles"
+          description="Search and manage every registered user."
+        />
+
+        {/* Search bar */}
+        <form method="GET" className="flex gap-2">
+          <input
+            name="q"
+            defaultValue={q}
+            placeholder="Search by name, email or phone…"
+            className="h-10 flex-1 rounded-[6px] border-2 border-ink bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-lime focus:ring-offset-1"
+          />
+          <Button type="submit" variant="outline" className="h-10">
+            Search
+          </Button>
+        </form>
+
+        <FilterTabs
+          options={[
+            { value: "all", label: "All" },
+            { value: "customer", label: "Customers" },
+            { value: "owner", label: "Owners" },
+            { value: "admin", label: "Admins" },
+          ]}
+          current={role}
+          basePath="/admin/users"
+          params={{ q: qParam }}
+          label="Filter by role"
+        />
+
+        {result.items.length === 0 ? (
+          <EmptyState
+            icon={UsersRound}
+            title="No users found"
+            description={q ? `No results for "${q}".` : "No users match the current filter."}
+          />
+        ) : (
+          <DataTable
+            minWidth={860}
+            head={[
+              { label: "Name" },
+              { label: "Email" },
+              { label: "Role" },
+              { label: "Joined" },
+              { label: "Status" },
+              { label: "Actions" },
+            ]}
+            footer={
+              <TablePager
+                page={result.page}
+                totalPages={result.totalPages}
+                total={result.total}
+                perPage={PER_PAGE}
+                basePath="/admin/users"
+                params={{ q: qParam, role: roleParam }}
+                noun="users"
+              />
+            }
+          >
+            {result.items.map((u) => (
+              <tr
+                key={u.id}
+                className="border-b border-ink/10 text-sm last:border-b-0 hover:bg-secondary/40"
+              >
+                <td className="px-3 py-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="grid size-8 shrink-0 place-items-center rounded-[6px] border-2 border-ink bg-lime font-mono text-[11px] font-bold text-[#060605]">
+                      {u.initials}
+                    </span>
+                    <span className="font-semibold">{u.name}</span>
+                  </div>
+                </td>
+                <td className="px-3 py-3 font-mono text-[11px] text-ink-soft">
+                  {u.email}
+                </td>
+                <td className="px-3 py-3">
+                  <StatusBadge tone={ROLE_TONE[u.role]}>
+                    {u.role}
+                  </StatusBadge>
+                </td>
+                <td className="px-3 py-3 font-mono text-[11px] text-ink-soft">
+                  {formatDate(u.joined)}
+                </td>
+                <td className="px-3 py-3">
+                  <StatusBadge tone={u.status === "active" ? "green" : "red"}>
+                    {u.status}
+                  </StatusBadge>
+                </td>
+                <td className="px-3 py-3">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {}}
+                    className="pointer-events-none opacity-70"
+                  >
+                    Manage
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </DataTable>
+        )}
+      </div>
+    </DashboardShell>
   );
 }
