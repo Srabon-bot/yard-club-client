@@ -7,6 +7,7 @@ import {
   ArrowRight,
   Eye,
   EyeOff,
+  Image as ImageIcon,
   LockKeyhole,
   Mail,
   Phone,
@@ -40,6 +41,33 @@ export function RegisterForm() {
   const [role, setRole] = useState<Role>("customer");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const data = {
+      role,
+      name: formData.get("name") as string,
+      email: formData.get("email") as string,
+      phone: formData.get("phone") as string,
+      photoUrl: formData.get("photoUrl") as string,
+      password: formData.get("password") as string,
+      terms: formData.get("terms") === "on",
+    };
+
+    console.log("[Register Form Data]:", data);
+
+    setLoading(true);
+    window.setTimeout(() => {
+      toast.success("Account created", {
+        description:
+          role === "owner"
+            ? "Your yard dashboard is ready. Add your first listing."
+            : "Your customer dashboard is ready.",
+      });
+      router.push(role === "owner" ? "/owner" : "/dashboard");
+    }, 700);
+  };
 
   return (
     <div className="grid gap-5">
@@ -96,22 +124,7 @@ export function RegisterForm() {
         <span className="h-px flex-1 bg-ink/15" />
       </div>
 
-      <form
-        className="grid gap-4"
-        onSubmit={(event) => {
-          event.preventDefault();
-          setLoading(true);
-          window.setTimeout(() => {
-            toast.success("Account created", {
-              description:
-                role === "owner"
-                  ? "Your yard dashboard is ready. Add your first listing."
-                  : "Your customer dashboard is ready.",
-            });
-            router.push(role === "owner" ? "/owner" : "/dashboard");
-          }, 750);
-        }}
-      >
+      <form className="grid gap-4" onSubmit={handleSubmit}>
         <div className="grid gap-1.5">
           <Label htmlFor="register-name" className="text-xs font-semibold">
             Full name
@@ -126,7 +139,7 @@ export function RegisterForm() {
               name="name"
               required
               autoComplete="name"
-              placeholder="Your name"
+              placeholder="Tanvir Ahmed"
               className="h-11 rounded-[6px] border-2 border-ink bg-surface pl-9 text-sm"
             />
           </div>
@@ -168,10 +181,32 @@ export function RegisterForm() {
               type="tel"
               required
               autoComplete="tel"
-              placeholder="+880 1XXX XXX XXX"
+              placeholder="+880 1711 000 000"
               className="h-11 rounded-[6px] border-2 border-ink bg-surface pl-9 font-mono text-sm"
             />
           </div>
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label htmlFor="register-photo" className="text-xs font-semibold">
+            Photo URL (Optional)
+          </Label>
+          <div className="relative">
+            <ImageIcon
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-soft"
+              aria-hidden="true"
+            />
+            <Input
+              id="register-photo"
+              name="photoUrl"
+              type="url"
+              placeholder="https://i.ibb.co/... or profile image link"
+              className="h-11 rounded-[6px] border-2 border-ink bg-surface pl-9 text-sm"
+            />
+          </div>
+          <p className="font-mono text-[9px] uppercase tracking-[0.06em] text-ink-soft">
+            Direct link or ImgBB uploaded image URL
+          </p>
         </div>
 
         <div className="grid gap-1.5">
@@ -188,9 +223,9 @@ export function RegisterForm() {
               name="password"
               type={showPassword ? "text" : "password"}
               required
-              minLength={8}
+              minLength={6}
               autoComplete="new-password"
-              placeholder="At least 8 characters"
+              placeholder="At least 6 characters (upper, lower)"
               className="h-11 rounded-[6px] border-2 border-ink bg-surface pl-9 pr-11 text-sm"
             />
             <button
@@ -212,6 +247,7 @@ export function RegisterForm() {
         <label className="flex items-start gap-2.5 text-xs leading-relaxed text-ink-soft">
           <input
             type="checkbox"
+            name="terms"
             required
             className="mt-0.5 size-4 shrink-0 accent-[var(--lime)]"
           />

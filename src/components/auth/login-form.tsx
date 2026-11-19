@@ -58,6 +58,26 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const data = {
+      email: formData.get("email") as string,
+      password: formData.get("password") as string,
+      remember: formData.get("remember") === "on",
+    };
+
+    console.log("[Login Form Data]:", data);
+
+    setLoading(true);
+    window.setTimeout(() => {
+      toast.success("Welcome back", {
+        description: `Signed in as ${data.email}. Opening dashboard.`,
+      });
+      router.push("/dashboard");
+    }, 600);
+  };
+
   return (
     <div className="grid gap-5">
       <GoogleButton label="Continue with Google" />
@@ -74,19 +94,7 @@ export function LoginForm() {
         <span className="h-px flex-1 bg-ink/15" />
       </div>
 
-      <form
-        className="grid gap-4"
-        onSubmit={(event) => {
-          event.preventDefault();
-          setLoading(true);
-          window.setTimeout(() => {
-            toast.success("Welcome back", {
-              description: "Opening your customer dashboard.",
-            });
-            router.push("/dashboard");
-          }, 700);
-        }}
-      >
+      <form className="grid gap-4" onSubmit={handleSubmit}>
         <div className="grid gap-1.5">
           <Label htmlFor="login-email" className="text-xs font-semibold">
             Email
