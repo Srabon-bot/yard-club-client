@@ -22,18 +22,23 @@ import { cn } from "@/lib/utils";
 import type { UserRole } from "@/lib/types";
 import { authClient } from "@/lib/auth-client";
 
-type Role = Extract<UserRole, "customer" | "owner">;
+type Role = UserRole; // "customer" | "owner" | "admin"
 
 const ROLES: { value: Role; label: string; note: string }[] = [
   {
     value: "customer",
-    label: "Rent gear",
-    note: "Book equipment from verified owners.",
+    label: "Customer",
+    note: "Rent equipment.",
   },
   {
     value: "owner",
-    label: "List gear",
-    note: "Earn from equipment sitting idle.",
+    label: "Owner",
+    note: "List equipment.",
+  },
+  {
+    value: "admin",
+    label: "Admin",
+    note: "Manage platform.",
   },
 ];
 
@@ -97,12 +102,20 @@ export function RegisterForm() {
 
       toast.success("Account created successfully!", {
         description:
-          role === "owner"
-            ? "Welcome to Yardclub. Opening your owner yard dashboard."
-            : "Welcome to Yardclub. Opening your customer dashboard.",
+          role === "admin"
+            ? "Welcome to Yardclub. Opening admin dashboard."
+            : role === "owner"
+              ? "Welcome to Yardclub. Opening owner yard dashboard."
+              : "Welcome to Yardclub. Opening customer dashboard.",
       });
 
-      router.push(role === "owner" ? "/owner" : "/dashboard");
+      if (role === "admin") {
+        router.push("/admin");
+      } else if (role === "owner") {
+        router.push("/owner");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Something went wrong during sign up.";
       toast.error("Sign up error", { description: message });
@@ -116,7 +129,7 @@ export function RegisterForm() {
       <div
         role="radiogroup"
         aria-label="Account type"
-        className="grid grid-cols-2 gap-2"
+        className="grid grid-cols-3 gap-2"
       >
         {ROLES.map((option) => {
           const active = role === option.value;
@@ -128,19 +141,19 @@ export function RegisterForm() {
               aria-checked={active}
               onClick={() => setRole(option.value)}
               className={cn(
-                "rounded-[8px] border-2 border-ink p-3 text-left transition-colors",
+                "rounded-[8px] border-2 border-ink p-2.5 text-left transition-colors",
                 active
                   ? "bg-lime text-[#060605] shadow-offset-sm"
                   : "bg-surface text-ink-soft hover:bg-secondary hover:text-foreground",
               )}
             >
-              <span className="font-heading text-sm font-extrabold tracking-[-0.02em]">
+              <span className="font-heading text-xs font-extrabold tracking-[-0.02em] sm:text-sm">
                 {option.label}
               </span>
               <span
                 className={cn(
-                  "mt-1 block text-[11px] leading-snug",
-                  active ? "text-black/60" : "text-ink-soft",
+                  "mt-0.5 block text-[10px] leading-snug sm:text-[11px]",
+                  active ? "text-black/70" : "text-ink-soft",
                 )}
               >
                 {option.note}
@@ -151,7 +164,13 @@ export function RegisterForm() {
       </div>
 
       <GoogleButton
-        label={role === "owner" ? "Continue with Google" : "Sign up with Google"}
+        label={
+          role === "admin"
+            ? "Sign up with Google (Customer)"
+            : role === "owner"
+              ? "Continue with Google"
+              : "Sign up with Google"
+        }
       />
 
       <p className="text-center font-mono text-[9px] uppercase tracking-[0.08em] text-ink-soft">
@@ -307,9 +326,11 @@ export function RegisterForm() {
         <Button type="submit" disabled={loading} className="h-12 w-full text-base">
           {loading
             ? "Creating account…"
-            : role === "owner"
-              ? "Create owner account"
-              : "Create account"}
+            : role === "admin"
+              ? "Create admin account"
+              : role === "owner"
+                ? "Create owner account"
+                : "Create customer account"}
           {!loading && <ArrowRight className="size-4" aria-hidden="true" />}
         </Button>
       </form>
