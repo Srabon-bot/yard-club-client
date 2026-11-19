@@ -152,6 +152,8 @@ export default async function OwnerProfilePage({
                 <EquipmentCard
                   key={item.id}
                   item={item}
+                  categoryName={item.category}
+                  owner={owner}
                   available={availabilityMap[item.id] ?? true}
                 />
               ))}
@@ -182,7 +184,7 @@ export default async function OwnerProfilePage({
                       <p className="text-[10px] text-ink-soft">{r.location}</p>
                     </div>
                   </div>
-                  <StarRating rating={r.rating} />
+                  <StarRating value={r.rating} />
                 </div>
                 <p className="mt-4 text-sm leading-relaxed text-ink-soft">
                   &ldquo;{r.comment}&rdquo;
