@@ -38,11 +38,29 @@ const PROFILES: Record<Exclude<PreviewRole, "guest">, string> = {
 
 const PEOPLE: Record<
   Exclude<PreviewRole, "guest">,
-  { name: string; initials: string; meta: string; image?: string | null }
+  { name: string; initials: string; roleLabel: string; subtitle: string; image?: string | null }
 > = {
-  customer: { name: "Tanvir Ahmed", initials: "TA", meta: "Customer · Dhanmondi", image: null },
-  owner: { name: "Rafiul Islam", initials: "RI", meta: "Owner · 3 listings", image: null },
-  admin: { name: "Ayesha Karim", initials: "AK", meta: "Admin · Yardclub", image: null },
+  customer: {
+    name: "Tanvir Ahmed",
+    initials: "TA",
+    roleLabel: "Customer",
+    subtitle: "Dhanmondi, Dhaka",
+    image: null,
+  },
+  owner: {
+    name: "Rafiul Islam",
+    initials: "RI",
+    roleLabel: "Owner",
+    subtitle: "3 active listings",
+    image: null,
+  },
+  admin: {
+    name: "Ayesha Karim",
+    initials: "AK",
+    roleLabel: "Admin",
+    subtitle: "Yardclub Platform",
+    image: null,
+  },
 };
 
 export function SiteHeader() {
@@ -96,7 +114,8 @@ export function SiteHeader() {
       ? {
           name: liveUser.name || "User",
           initials: getInitials(liveUser.name),
-          meta: `${(liveUser.role || "customer").toUpperCase()} · ${liveUser.email}`,
+          roleLabel: (liveUser.role || "customer").toUpperCase(),
+          subtitle: liveUser.email || "",
           image: liveUser.image || null,
         }
       : PEOPLE[role as Exclude<PreviewRole, "guest">];
@@ -207,9 +226,9 @@ export function SiteHeader() {
                 <DropdownMenuContent
                   align="end"
                   sideOffset={8}
-                  className="w-64 rounded-lg border-2 border-ink shadow-offset-sm"
+                  className="w-72 rounded-lg border-2 border-ink p-1.5 shadow-offset-sm"
                 >
-                  <DropdownMenuLabel className="flex items-center gap-2.5 py-2.5">
+                  <DropdownMenuLabel className="flex items-start gap-3 p-2.5">
                     <span className="relative grid size-10 shrink-0 place-items-center overflow-hidden rounded-full border-2 border-ink bg-secondary font-mono text-xs font-bold">
                       {person?.image ? (
                         <Image
@@ -223,10 +242,18 @@ export function SiteHeader() {
                         person?.initials
                       )}
                     </span>
-                    <span className="grid min-w-0">
-                      <span className="truncate text-sm font-semibold">{person?.name}</span>
-                      <span className="truncate font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
-                        {person?.meta}
+                    <span className="grid min-w-0 flex-1 gap-0.5">
+                      <span className="truncate text-sm font-bold leading-tight text-foreground">
+                        {person?.name}
+                      </span>
+                      <span className="inline-flex w-fit items-center rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        {person?.roleLabel}
+                      </span>
+                      <span
+                        title={person?.subtitle}
+                        className="truncate font-mono text-xs text-muted-foreground"
+                      >
+                        {person?.subtitle}
                       </span>
                     </span>
                   </DropdownMenuLabel>
