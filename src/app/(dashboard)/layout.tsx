@@ -1,5 +1,4 @@
 import { SiteHeader } from "@/components/site/site-header";
-import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 
 export default function DashboardLayout({
   children,
@@ -12,9 +11,7 @@ export default function DashboardLayout({
         Skip to content
       </a>
       <SiteHeader />
-      <main id="main">
-        <DashboardShell>{children}</DashboardShell>
-      </main>
+      <main id="main">{children}</main>
     </>
   );
 }
