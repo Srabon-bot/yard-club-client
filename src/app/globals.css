@@ -343,18 +343,30 @@
     font-family: var(--font-display);
     font-weight: 800;
     font-size: clamp(2.75rem, 6.4vw, 5.25rem);
-    line-height: 0.94;
+    line-height: 1.05;
     letter-spacing: -0.045em;
     text-wrap: balance;
+  }
+
+  @media (min-width: 768px) {
+    .display-1 {
+      line-height: 0.98;
+    }
   }
 
   .display-2 {
     font-family: var(--font-display);
     font-weight: 800;
     font-size: clamp(2rem, 4.2vw, 3.25rem);
-    line-height: 0.98;
+    line-height: 1.05;
     letter-spacing: -0.04em;
     text-wrap: balance;
+  }
+
+  @media (min-width: 768px) {
+    .display-2 {
+      line-height: 0.98;
+    }
   }
 
   .display-3 {
@@ -428,7 +440,8 @@
     background: var(--lime);
     color: var(--yc-1000);
     line-height: 1;
-    padding: 0.01em 0.09em 0.06em;
+    padding: 0 0.08em 0.04em;
+    vertical-align: baseline;
     -webkit-box-decoration-break: clone;
     box-decoration-break: clone;
   }
