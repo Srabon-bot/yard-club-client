@@ -16,12 +16,25 @@ export function EquipmentCard({
   owner,
   categoryName,
   priority = false,
+  available = item.quantity > 0,
 }: {
   item: Equipment;
   owner?: Owner;
   categoryName: string;
   priority?: boolean;
+  available?: boolean;
 }) {
+  const availabilityTone = available
+    ? "green"
+    : item.quantity > 0
+      ? "amber"
+      : "red";
+  const availabilityLabel = available
+    ? "Available"
+    : item.quantity > 0
+      ? "On rent"
+      : "Booked out";
+
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-[10px] border-2 border-ink bg-surface transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:shadow-offset-sm">
       <div className="relative aspect-[4/3] overflow-hidden border-b-2 border-ink bg-secondary">
@@ -34,9 +47,7 @@ export function EquipmentCard({
           className="object-cover transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.03]"
         />
         <span className="absolute left-3 top-3">
-          <StatusBadge tone={item.quantity > 0 ? "green" : "amber"}>
-            {item.quantity > 0 ? "Available" : "Booked out"}
-          </StatusBadge>
+          <StatusBadge tone={availabilityTone}>{availabilityLabel}</StatusBadge>
         </span>
         <span className="absolute right-3 top-3 rounded-full border border-ink/20 bg-background/90 px-2 py-1 font-mono text-[9px] uppercase tracking-[0.1em] backdrop-blur-sm">
           {item.condition}-grade

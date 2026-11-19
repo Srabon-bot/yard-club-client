@@ -25,7 +25,7 @@ import { StatusBadge } from "@/components/site/status-badge";
 import { Button } from "@/components/ui/button";
 import { getAdminAnalytics } from "@/lib/data/analytics";
 import { getNextAvailableDate } from "@/lib/data/bookings";
-import { getFeaturedEquipment } from "@/lib/data/equipment";
+import { getFeaturedEquipment, isAvailableNow } from "@/lib/data/equipment";
 import { listCategories } from "@/lib/data/categories";
 import { listOwners } from "@/lib/data/owners";
 import { getFeaturedReviews } from "@/lib/data/reviews";
@@ -328,6 +328,7 @@ export default async function HomePage() {
                       ?.name ?? "Equipment"
                   }
                   priority={index === 0}
+                  available={isAvailableNow(item)}
                 />
               </StaggerCard>
             ))}

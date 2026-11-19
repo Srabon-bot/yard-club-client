@@ -1,12 +1,19 @@
+import { bookings } from "@/lib/mock/bookings";
+import { categories } from "@/lib/mock/categories";
 import { equipment } from "@/lib/mock/equipment";
-import type { CategoryId, Equipment } from "@/lib/types";
+import type { CategoryId, Equipment, RentalType } from "@/lib/types";
 
 export type EquipmentSort = "newest" | "price-asc" | "price-desc" | "rating";
+export type AvailabilityFilter = "all" | "available" | "rented";
 
 export type EquipmentQuery = {
   q?: string;
   category?: CategoryId | "all";
   location?: string;
+  rentalType?: RentalType | "all";
+  availability?: AvailabilityFilter;
+  minPrice?: number;
+  maxPrice?: number;
   sort?: EquipmentSort;
   page?: number;
   perPage?: number;
@@ -19,7 +26,24 @@ export type EquipmentPage = {
   page: number;
   perPage: number;
   totalPages: number;
+  availability: Record<string, boolean>;
 };
+
+/* An item is available when the quantity on the listing is greater than the
+   units currently out on an active booking. The real API will read the same
+   comparison from the bookings collection. */
+export const isAvailableNow = (item: Equipment) => {
+  const held = bookings
+    .filter(
+      (booking) =>
+        booking.equipmentId === item.id && booking.bookingStatus === "active",
+    )
+    .reduce((total, booking) => total + booking.quantity, 0);
+  return item.quantity - held > 0;
+};
+
+const categoryName = (id: CategoryId) =>
+  categories.find((category) => category.id === id)?.name ?? "";
 
 const matches = (item: Equipment, query: EquipmentQuery) => {
   if (!query.includePending && item.status !== "approved") return false;
@@ -29,6 +53,22 @@ const matches = (item: Equipment, query: EquipmentQuery) => {
   if (query.location && query.location !== "all" && !item.location.includes(query.location)) {
     return false;
   }
+  if (
+    query.rentalType &&
+    query.rentalType !== "all" &&
+    !item.rentalTypes.includes(query.rentalType)
+  ) {
+    return false;
+  }
+  if (query.availability === "available" && !isAvailableNow(item)) return false;
+  if (query.availability === "rented" && isAvailableNow(item)) return false;
+  if (typeof query.minPrice === "number" && item.pricePerDay < query.minPrice) {
+    return false;
+  }
+  if (typeof query.maxPrice === "number" && item.pricePerDay > query.maxPrice) {
+    return false;
+  }
+
   const q = query.q?.trim().toLowerCase();
   if (!q) return true;
   return [
@@ -37,6 +77,7 @@ const matches = (item: Equipment, query: EquipmentQuery) => {
     item.model,
     item.description,
     item.location,
+    categoryName(item.category),
     ...item.features,
   ]
     .join(" ")
@@ -70,6 +111,34 @@ export async function listEquipment(query: EquipmentQuery = {}): Promise<Equipme
     page: safePage,
     perPage,
     totalPages,
+    availability: Object.fromEntries(
+      filtered.map((item) => [item.id, isAvailableNow(item)]),
+    ),
+  };
+}
+
+export type EquipmentStats = {
+  total: number;
+  available: number;
+  owners: number;
+  categories: number;
+  cities: number;
+  minRate: number;
+};
+
+export async function getEquipmentStats(): Promise<EquipmentStats> {
+  const approved = equipment.filter((item) => item.status === "approved");
+  const rates = approved.map((item) => item.pricePerDay);
+
+  return {
+    total: approved.length,
+    available: approved.filter(isAvailableNow).length,
+    owners: new Set(approved.map((item) => item.ownerId)).size,
+    categories: new Set(approved.map((item) => item.category)).size,
+    cities: new Set(
+      approved.map((item) => item.location.split(",").pop()?.trim()),
+    ).size,
+    minRate: Math.min(...rates),
   };
 }
 
