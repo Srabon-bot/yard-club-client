@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Check, Minus, ShoppingCart } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatBDT } from "@/lib/format";
 import { equipment as allEquipment } from "@/lib/mock/equipment";
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
     "Compare specifications, rental rates, condition, and availability for up to 3 pieces of equipment on Yardclub.",
 };
 
-export default async function ComparePage({
+async function CompareContent({
   searchParams,
 }: {
   searchParams: Promise<{ ids?: string }>;
@@ -157,5 +158,17 @@ export default async function ComparePage({
         </table>
       </div>
     </div>
+  );
+}
+
+export default function ComparePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ids?: string }>;
+}) {
+  return (
+    <Suspense fallback={<div className="container-page py-20 text-center font-mono text-sm">Loading comparison matrix...</div>}>
+      <CompareContent searchParams={searchParams} />
+    </Suspense>
   );
 }

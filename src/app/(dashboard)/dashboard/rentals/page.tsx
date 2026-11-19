@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
@@ -8,7 +9,6 @@ import {
   DataTable,
   EmptyState,
   FilterTabs,
-  Panel,
   PaymentStatusBadge,
   TablePager,
 } from "@/components/dashboard/parts";
@@ -24,9 +24,11 @@ export const metadata: Metadata = { title: "My rentals" };
 
 const PER_PAGE = 8;
 
-export default async function CustomerRentalsPage({
+async function CustomerRentalsContent({
   searchParams,
-}: PageProps<"/dashboard/rentals">) {
+}: {
+  searchParams: Promise<{ status?: string; page?: string }>;
+}) {
   const sp = await searchParams;
   const rawStatus = typeof sp.status === "string" ? sp.status : "all";
   const status = rawStatus as BookingStatus | "all";
@@ -49,109 +51,121 @@ export default async function CustomerRentalsPage({
   const statusParam = status === "all" ? undefined : status;
 
   return (
-    <DashboardShell>
-      <div className="grid gap-6">
-        <DashboardHeading
-          eyebrow="Customer"
-          title="Every rental, one ledger"
-          description="All your bookings, their payment state and receipts."
-          actions={
-            <Button asChild>
-              <Link href="/equipment">Browse equipment</Link>
-            </Button>
+    <div className="grid gap-6">
+      <DashboardHeading
+        eyebrow="Customer"
+        title="Every rental, one ledger"
+        description="All your bookings, their payment state and receipts."
+        actions={
+          <Button asChild>
+            <Link href="/equipment">Browse equipment</Link>
+          </Button>
+        }
+      />
+
+      <FilterTabs
+        options={[
+          { value: "all", label: "All", count: allBookings.length },
+          { value: "upcoming", label: "Upcoming", count: stats.upcoming },
+          { value: "active", label: "Active", count: stats.active },
+          { value: "completed", label: "Completed", count: stats.completed },
+          { value: "cancelled", label: "Cancelled", count: stats.cancelled },
+        ]}
+        current={status}
+        basePath="/dashboard/rentals"
+        label="Filter by status"
+      />
+
+      {rows.length === 0 ? (
+        <EmptyState
+          icon={ShoppingBag}
+          title="No rentals found"
+          description={
+            status === "all"
+              ? "You have not made any bookings yet."
+              : `No ${status} bookings.`
+          }
+          action={
+            status === "all" ? (
+              <Button asChild>
+                <Link href="/equipment">Browse equipment</Link>
+              </Button>
+            ) : undefined
           }
         />
-
-        <FilterTabs
-          options={[
-            { value: "all", label: "All", count: allBookings.length },
-            { value: "upcoming", label: "Upcoming", count: stats.upcoming },
-            { value: "active", label: "Active", count: stats.active },
-            { value: "completed", label: "Completed", count: stats.completed },
-            { value: "cancelled", label: "Cancelled", count: stats.cancelled },
+      ) : (
+        <DataTable
+          minWidth={860}
+          head={[
+            { label: "Equipment" },
+            { label: "Dates" },
+            { label: "Booked" },
+            { label: "Total", align: "right" },
+            { label: "Payment" },
+            { label: "Status" },
           ]}
-          current={status}
-          basePath="/dashboard/rentals"
-          label="Filter by status"
-        />
+          footer={
+            <TablePager
+              page={safePage}
+              totalPages={totalPages}
+              total={filtered.length}
+              perPage={PER_PAGE}
+              basePath="/dashboard/rentals"
+              params={{ status: statusParam }}
+              noun="bookings"
+            />
+          }
+        >
+          {rows.map((b) => (
+            <tr
+              key={b.id}
+              className="border-b border-ink/10 text-sm last:border-b-0 hover:bg-secondary/40"
+            >
+              <td className="px-3 py-3">
+                <Link
+                  href={`/equipment/${b.equipmentId}`}
+                  className="font-semibold hover:underline"
+                >
+                  {b.equipment?.name ?? "—"}
+                </Link>
+                <p className="font-mono text-[10px] text-ink-soft">
+                  #{b.id}
+                </p>
+              </td>
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-[11px] text-ink-soft">
+                {formatShortDate(b.startDate)} →{" "}
+                {formatShortDate(b.endDate)}
+              </td>
+              <td className="px-3 py-3 font-mono text-[11px] text-ink-soft">
+                {formatDate(b.createdAt)}
+              </td>
+              <td className="px-3 py-3 text-right font-mono text-[12px] tabular-nums">
+                {formatBDT(b.total)}
+              </td>
+              <td className="px-3 py-3">
+                <PaymentStatusBadge status={b.paymentStatus} />
+              </td>
+              <td className="px-3 py-3">
+                <BookingStatusBadge status={b.bookingStatus} />
+              </td>
+            </tr>
+          ))}
+        </DataTable>
+      )}
+    </div>
+  );
+}
 
-        {rows.length === 0 ? (
-          <EmptyState
-            icon={ShoppingBag}
-            title="No rentals found"
-            description={
-              status === "all"
-                ? "You have not made any bookings yet."
-                : `No ${status} bookings.`
-            }
-            action={
-              status === "all" ? (
-                <Button asChild>
-                  <Link href="/equipment">Browse equipment</Link>
-                </Button>
-              ) : undefined
-            }
-          />
-        ) : (
-          <DataTable
-            minWidth={860}
-            head={[
-              { label: "Equipment" },
-              { label: "Dates" },
-              { label: "Booked" },
-              { label: "Total", align: "right" },
-              { label: "Payment" },
-              { label: "Status" },
-            ]}
-            footer={
-              <TablePager
-                page={safePage}
-                totalPages={totalPages}
-                total={filtered.length}
-                perPage={PER_PAGE}
-                basePath="/dashboard/rentals"
-                params={{ status: statusParam }}
-                noun="bookings"
-              />
-            }
-          >
-            {rows.map((b) => (
-              <tr
-                key={b.id}
-                className="border-b border-ink/10 text-sm last:border-b-0 hover:bg-secondary/40"
-              >
-                <td className="px-3 py-3">
-                  <Link
-                    href={`/equipment/${b.equipmentId}`}
-                    className="font-semibold hover:underline"
-                  >
-                    {b.equipment?.name ?? "—"}
-                  </Link>
-                  <p className="font-mono text-[10px] text-ink-soft">
-                    #{b.id}
-                  </p>
-                </td>
-                <td className="whitespace-nowrap px-3 py-3 font-mono text-[11px] text-ink-soft">
-                  {formatShortDate(b.startDate)} →{" "}
-                  {formatShortDate(b.endDate)}
-                </td>
-                <td className="px-3 py-3 font-mono text-[11px] text-ink-soft">
-                  {formatDate(b.createdAt)}
-                </td>
-                <td className="px-3 py-3 text-right font-mono text-[12px] tabular-nums">
-                  {formatBDT(b.total)}
-                </td>
-                <td className="px-3 py-3">
-                  <PaymentStatusBadge status={b.paymentStatus} />
-                </td>
-                <td className="px-3 py-3">
-                  <BookingStatusBadge status={b.bookingStatus} />
-                </td>
-              </tr>
-            ))}
-          </DataTable>
-        )}
-      </div>
+export default function CustomerRentalsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; page?: string }>;
+}) {
+  return (
+    <DashboardShell>
+      <Suspense fallback={<div className="p-8 font-mono text-xs">Loading bookings...</div>}>
+        <CustomerRentalsContent searchParams={searchParams} />
+      </Suspense>
     </DashboardShell>
   );
 }

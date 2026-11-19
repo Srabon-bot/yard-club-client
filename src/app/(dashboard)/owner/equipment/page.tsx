@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Package, Pencil, Trash2 } from "lucide-react";
@@ -124,7 +125,7 @@ function EquipmentTable({ status }: { status: EquipmentStatus | "all" }) {
   );
 }
 
-export default function OwnerEquipmentPage() {
+function OwnerEquipmentContent() {
   const sp = useSearchParams();
   const rawStatus = sp.get("status") ?? "all";
   const status = rawStatus as EquipmentStatus | "all";
@@ -137,33 +138,41 @@ export default function OwnerEquipmentPage() {
   };
 
   return (
+    <div className="grid gap-6">
+      <DashboardHeading
+        eyebrow="Owner"
+        title="Manage the fleet"
+        description="Every listing with status, rate and booking actions."
+        actions={
+          <Button asChild>
+            <Link href="/owner/add-equipment">Add equipment</Link>
+          </Button>
+        }
+      />
+
+      <FilterTabs
+        options={[
+          { value: "all", label: "All", count: counts.all },
+          { value: "approved", label: "Approved", count: counts.approved },
+          { value: "pending", label: "Pending", count: counts.pending },
+          { value: "rejected", label: "Rejected", count: counts.rejected },
+        ]}
+        current={status}
+        basePath="/owner/equipment"
+        label="Filter by status"
+      />
+
+      <EquipmentTable status={status} />
+    </div>
+  );
+}
+
+export default function OwnerEquipmentPage() {
+  return (
     <DashboardShell>
-      <div className="grid gap-6">
-        <DashboardHeading
-          eyebrow="Owner"
-          title="Manage the fleet"
-          description="Every listing with status, rate and booking actions."
-          actions={
-            <Button asChild>
-              <Link href="/owner/add-equipment">Add equipment</Link>
-            </Button>
-          }
-        />
-
-        <FilterTabs
-          options={[
-            { value: "all", label: "All", count: counts.all },
-            { value: "approved", label: "Approved", count: counts.approved },
-            { value: "pending", label: "Pending", count: counts.pending },
-            { value: "rejected", label: "Rejected", count: counts.rejected },
-          ]}
-          current={status}
-          basePath="/owner/equipment"
-          label="Filter by status"
-        />
-
-        <EquipmentTable status={status} />
-      </div>
+      <Suspense fallback={<div className="p-8 font-mono text-xs">Loading fleet...</div>}>
+        <OwnerEquipmentContent />
+      </Suspense>
     </DashboardShell>
   );
 }
