@@ -69,6 +69,12 @@ export type Review = {
   date: string;
 };
 
+export type Favorite = {
+  id: string;
+  customerId: string;
+  equipmentId: string;
+};
+
 export type Booking = {
   id: string;
   equipmentId: string;

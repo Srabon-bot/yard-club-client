@@ -1,21 +1,28 @@
 import type { Metadata } from "next";
-import { PhasePlaceholder } from "@/components/site/phase-placeholder";
+import { LoginForm } from "@/components/auth/login-form";
 
-export const metadata: Metadata = { title: 'Log in' };
+export const metadata: Metadata = {
+  title: "Log in",
+  description: "Sign in to manage your Yardclub bookings and saved equipment.",
+};
 
-export default function Page() {
+export default function LoginPage() {
   return (
-    <PhasePlaceholder
-      phase="05"
-      title='Pick up where you left off'
-      description='Email and password with Google as the primary path, plus the reset-password link and a route to register.'
-      sections={[
-      'Google sign-in button',
-      'Email and password form with visibility toggle',
-      'Inline validation and error state',
-      'Forgot-password and register links',
-      ]}
-      
-    />
+    <div>
+      <p className="eyebrow">Welcome back</p>
+      <h1 className="display-2 mt-2">Pick up where you left off.</h1>
+      <p className="mt-3 text-sm leading-relaxed text-ink-soft">
+        Manage rentals, reopen a saved listing and pick the dates you were
+        watching. One account covers renting and listing.
+      </p>
+
+      <div className="mt-7">
+        <LoginForm />
+      </div>
+
+      <p className="mt-6 border-t border-ink/15 pt-4 font-mono text-[9px] leading-relaxed uppercase tracking-[0.06em] text-ink-soft">
+        Protected by Stripe for payments · handover checklist on every rental
+      </p>
+    </div>
   );
 }
