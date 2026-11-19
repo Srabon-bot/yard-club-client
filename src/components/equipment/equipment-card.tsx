@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { ArrowUpRight, MapPin, ShieldCheck, Star } from "lucide-react";
+import { CompareToggle } from "@/components/compare/compare-toggle";
 import { DetailLink } from "@/components/equipment/detail-link";
 import { StatusBadge } from "@/components/site/status-badge";
 import { formatBDT } from "@/lib/format";
@@ -51,6 +52,9 @@ export function EquipmentCard({
         </span>
         <span className="absolute right-3 top-3 rounded-full border border-ink/20 bg-background/90 px-2 py-1 font-mono text-[9px] uppercase tracking-[0.1em] backdrop-blur-sm">
           {item.condition}-grade
+        </span>
+        <span className="absolute bottom-3 right-3">
+          <CompareToggle id={item.id} name={item.name} />
         </span>
       </div>
 

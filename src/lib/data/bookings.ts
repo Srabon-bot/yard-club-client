@@ -76,6 +76,26 @@ export async function getNextAvailableDate(
   return next.toISOString().slice(0, 10);
 }
 
+export type EquipmentHold = {
+  startDate: string;
+  endDate: string;
+  quantity: number;
+  status: BookingStatus;
+};
+
+export async function getEquipmentHolds(
+  equipmentId: string,
+): Promise<EquipmentHold[]> {
+  return bookings
+    .filter((booking) => booking.equipmentId === equipmentId)
+    .map((booking) => ({
+      startDate: booking.startDate,
+      endDate: booking.endDate,
+      quantity: booking.quantity,
+      status: booking.bookingStatus,
+    }));
+}
+
 export async function getBooking(id: string): Promise<BookingRow | undefined> {
   const booking = bookings.find((entry) => entry.id === id);
   if (!booking) return undefined;
