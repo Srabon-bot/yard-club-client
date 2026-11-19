@@ -1,0 +1,488 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:where([data-mode="dark"], [data-mode="dark"] *));
+
+/* ------------------------------------------------------------------ *
+ * Yardclub design tokens
+ *
+ * Tier 1 primitives → tier 2 semantic roles → shadcn bridge.
+ * Components only read the semantic layer. Mode is `data-mode` on <html>,
+ * so a theme switch never re-renders a component tree.
+ * ------------------------------------------------------------------ */
+
+:root {
+  /* primitives — concrete neutrals */
+  --yc-25: #fefefb;
+  --yc-50: #f9f9f6;
+  --yc-100: #f1f1ed;
+  --yc-200: #e4e4de;
+  --yc-300: #d2d1ca;
+  --yc-400: #b8b8af;
+  --yc-500: #989890;
+  --yc-600: #777770;
+  --yc-700: #5a5a54;
+  --yc-800: #40403b;
+  --yc-900: #292925;
+  --yc-950: #121210;
+  --yc-1000: #060605;
+
+  /* primitives — lime, cobalt, signal */
+  --lime-200: #dcf5ae;
+  --lime-300: #caee7e;
+  --lime-400: #b9e44e;
+  --lime-500: #a9d800;
+  --lime-600: #9bc700;
+  --lime-700: #89af11;
+  --lime-800: #739029;
+  --lime-900: #596c2e;
+  --lime-950: #3f4a2b;
+  --cobalt-300: #b5ceff;
+  --cobalt-400: #8eb3ff;
+  --cobalt-600: #2c65f5;
+  --cobalt-700: #2255d5;
+  --cobalt-800: #1a42a8;
+  --green-100: #d5f9e6;
+  --green-300: #83e5b7;
+  --green-400: #43ce95;
+  --green-600: #008f61;
+  --green-800: #00593b;
+  --green-950: #002717;
+  --amber-100: #fff0db;
+  --amber-300: #ffd085;
+  --amber-400: #fdb62d;
+  --amber-500: #e7a200;
+  --amber-700: #a97500;
+  --amber-800: #875d00;
+  --amber-950: #412e0c;
+  --red-100: #ffe9e6;
+  --red-300: #ffb5ac;
+  --red-400: #ff867a;
+  --red-500: #f3524a;
+  --red-600: #d4302e;
+  --red-800: #8b1214;
+  --red-950: #3c0c0a;
+
+  /* type — Archivo carries the display and body, Martian Mono every number */
+  --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-code: var(--font-martian), ui-monospace, "SF Mono", monospace;
+
+  /* brand geometry — hard corners, thick rules, offset shadows */
+  --radius: 6px;
+  --radius-card: 10px;
+  --border-ink: 2px;
+  --shadow-offset: 4px 4px 0 var(--yc-1000);
+  --shadow-offset-sm: 3px 3px 0 var(--yc-1000);
+  --hover-lift: -2px;
+
+  /* semantic — light */
+  --background: var(--yc-100);
+  --foreground: var(--yc-1000);
+  --card: var(--yc-25);
+  --card-foreground: var(--yc-1000);
+  --popover: var(--yc-25);
+  --popover-foreground: var(--yc-1000);
+  --primary: var(--lime-500);
+  --primary-foreground: var(--yc-1000);
+  --secondary: var(--yc-200);
+  --secondary-foreground: var(--yc-1000);
+  --muted: var(--yc-200);
+  --muted-foreground: var(--yc-700);
+  --accent: var(--yc-200);
+  --accent-foreground: var(--yc-1000);
+  --destructive: var(--red-600);
+  --destructive-foreground: var(--yc-25);
+  --success: var(--green-600);
+  --success-foreground: var(--yc-1000);
+  --warning: var(--amber-700);
+  --warning-foreground: var(--yc-1000);
+  --border: var(--yc-300);
+  --input: var(--yc-1000);
+  --ring: var(--cobalt-600);
+
+  --surface: var(--yc-25);
+  --surface-2: var(--yc-200);
+  --ink: var(--yc-1000);
+  --ink-soft: var(--yc-700);
+  --paper: var(--yc-100);
+  --lime: var(--lime-500);
+  --lime-hover: var(--lime-600);
+  --lime-soft: var(--lime-200);
+  --lime-ink: var(--lime-900);
+  --focus: var(--cobalt-600);
+  --link: var(--cobalt-700);
+  --success-soft: var(--green-100);
+  --success-text: var(--green-800);
+  --warning-soft: var(--amber-100);
+  --warning-text: var(--amber-800);
+  --danger-soft: var(--red-100);
+  --danger-text: var(--red-800);
+
+  --chart-1: var(--lime-800);
+  --chart-2: var(--cobalt-600);
+  --chart-3: var(--red-500);
+  --chart-4: var(--green-600);
+  --chart-5: var(--amber-700);
+  --chart-accent: var(--lime-500);
+
+  --sidebar: var(--yc-25);
+  --sidebar-foreground: var(--yc-1000);
+  --sidebar-primary: var(--lime-500);
+  --sidebar-primary-foreground: var(--yc-1000);
+  --sidebar-accent: var(--yc-200);
+  --sidebar-accent-foreground: var(--yc-1000);
+  --sidebar-border: var(--yc-300);
+  --sidebar-ring: var(--cobalt-600);
+}
+
+[data-mode="dark"] {
+  --shadow-offset: 4px 4px 0 var(--yc-800);
+  --shadow-offset-sm: 3px 3px 0 var(--yc-800);
+
+  --background: var(--yc-1000);
+  --foreground: var(--yc-50);
+  --card: var(--yc-950);
+  --card-foreground: var(--yc-50);
+  --popover: var(--yc-900);
+  --popover-foreground: var(--yc-50);
+  --primary: var(--lime-500);
+  --primary-foreground: var(--yc-1000);
+  --secondary: var(--yc-900);
+  --secondary-foreground: var(--yc-50);
+  --muted: var(--yc-900);
+  --muted-foreground: var(--yc-300);
+  --accent: var(--yc-900);
+  --accent-foreground: var(--yc-50);
+  --destructive: var(--red-600);
+  --destructive-foreground: var(--yc-25);
+  --success: var(--green-600);
+  --success-foreground: var(--yc-1000);
+  --warning: var(--amber-500);
+  --warning-foreground: var(--yc-1000);
+  --border: var(--yc-800);
+  --input: var(--yc-600);
+  --ring: var(--cobalt-400);
+
+  --surface: var(--yc-950);
+  --surface-2: var(--yc-900);
+  --ink: var(--yc-50);
+  --ink-soft: var(--yc-300);
+  --paper: var(--yc-1000);
+  --lime: var(--lime-500);
+  --lime-hover: var(--lime-400);
+  --lime-soft: var(--lime-950);
+  --lime-ink: var(--lime-300);
+  --focus: var(--cobalt-400);
+  --link: var(--cobalt-300);
+  --success-soft: var(--green-950);
+  --success-text: var(--green-300);
+  --warning-soft: var(--amber-950);
+  --warning-text: var(--amber-300);
+  --danger-soft: var(--red-950);
+  --danger-text: var(--red-300);
+
+  --chart-1: var(--lime-500);
+  --chart-2: var(--cobalt-300);
+  --chart-3: var(--red-400);
+  --chart-4: var(--green-400);
+  --chart-5: var(--amber-400);
+  --chart-accent: var(--lime-400);
+
+  --sidebar: var(--yc-950);
+  --sidebar-foreground: var(--yc-50);
+  --sidebar-primary: var(--lime-500);
+  --sidebar-primary-foreground: var(--yc-1000);
+  --sidebar-accent: var(--yc-900);
+  --sidebar-accent-foreground: var(--yc-50);
+  --sidebar-border: var(--yc-800);
+  --sidebar-ring: var(--cobalt-400);
+}
+
+@theme inline {
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-code);
+  --font-heading: var(--font-display);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
+  --color-success-text: var(--success-text);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-text: var(--warning-text);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-text: var(--danger-text);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-paper: var(--paper);
+  --color-lime: var(--lime);
+  --color-lime-hover: var(--lime-hover);
+  --color-lime-soft: var(--lime-soft);
+  --color-lime-ink: var(--lime-ink);
+  --color-focus: var(--focus);
+  --color-link: var(--link);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-accent: var(--chart-accent);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius-card);
+  --radius-xl: calc(var(--radius-card) + 2px);
+
+  --shadow-offset: var(--shadow-offset);
+  --shadow-offset-sm: var(--shadow-offset-sm);
+
+  --animate-marquee: marquee 28s linear infinite;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    background: var(--background);
+    color: var(--foreground);
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-block-start: 88px;
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.042em;
+    line-height: 0.98;
+    text-wrap: balance;
+  }
+
+  p { text-wrap: pretty; }
+  ::selection { background: var(--lime); color: var(--lime-ink); }
+
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 1ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 1ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .container-page {
+    width: min(1200px, calc(100% - 32px));
+    margin-inline: auto;
+  }
+
+  @media (min-width: 768px) {
+    .container-page { width: min(1200px, calc(100% - 64px)); }
+  }
+
+  /* Shared type roles so every page uses one heading scale. */
+  .display-1 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(2.75rem, 6.4vw, 5.25rem);
+    line-height: 0.94;
+    letter-spacing: -0.045em;
+    text-wrap: balance;
+  }
+
+  .display-2 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(2rem, 4.2vw, 3.25rem);
+    line-height: 0.98;
+    letter-spacing: -0.04em;
+    text-wrap: balance;
+  }
+
+  .display-3 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(1.5rem, 2.4vw, 2rem);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+  }
+
+  .eyebrow {
+    font-family: var(--font-code);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .lede {
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 60ch;
+  }
+
+  /* The signature card: 2px ink rule, 4px offset, no blur. */
+  .yc-card {
+    background: var(--surface);
+    border: var(--border-ink) solid var(--ink);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-offset);
+  }
+
+  .yc-panel {
+    background: var(--surface);
+    border: var(--border-ink) solid var(--ink);
+    border-radius: var(--radius-card);
+  }
+
+  .yc-rule {
+    border-top: var(--border-ink) solid var(--ink);
+  }
+
+  .yc-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    padding: 0.2rem 0.6rem;
+    font-family: var(--font-code);
+    font-size: 0.6875rem;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .yc-mono {
+    font-family: var(--font-code);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .yc-link {
+    text-decoration-line: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+  }
+
+  .yc-marker {
+    display: inline-block;
+    background: var(--lime);
+    color: var(--lime-ink);
+    line-height: 1;
+    padding: 0.01em 0.09em 0.06em;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+
+  .skip-link {
+    position: fixed;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 100;
+    transform: translateY(-160%);
+    border: 2px solid var(--ink);
+    border-radius: var(--radius);
+    background: var(--lime);
+    color: var(--lime-ink);
+    padding: 0.55rem 0.9rem;
+    font-weight: 600;
+    transition: transform 160ms ease;
+  }
+
+  .skip-link:focus-visible {
+    transform: translateY(0);
+    outline-offset: 3px;
+  }
+}
+
+/* Progressive enhancement: content renders visible, then reveals only once
+   JS is confirmed so a failed bundle never leaves the page blank. */
+.js [data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0);
+  transition:
+    opacity 620ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.js [data-reveal="in"] {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Offset shadow needs hover motion, never on touch. */
+@media (hover: hover) and (pointer: fine) {
+  .yc-hover {
+    transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .yc-hover:hover {
+    transform: translate(var(--hover-lift), var(--hover-lift));
+    box-shadow: 6px 6px 0 var(--ink);
+  }
+}
