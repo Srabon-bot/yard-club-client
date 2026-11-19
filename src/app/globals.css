@@ -426,7 +426,7 @@
   .yc-marker {
     display: inline-block;
     background: var(--lime);
-    color: var(--lime-ink);
+    color: var(--yc-1000);
     line-height: 1;
     padding: 0.01em 0.09em 0.06em;
     -webkit-box-decoration-break: clone;
