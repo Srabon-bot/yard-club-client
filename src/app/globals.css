@@ -486,3 +486,26 @@
     box-shadow: 6px 6px 0 var(--ink);
   }
 }
+
+/* Receipts should print as paper, not as a screenshot of the site. */
+@media print {
+  @page {
+    margin: 14mm;
+  }
+
+  [data-site-header],
+  [data-site-footer],
+  [data-preview-ui],
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  .print-receipt {
+    box-shadow: none !important;
+  }
+}

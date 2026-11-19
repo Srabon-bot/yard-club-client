@@ -55,7 +55,10 @@ export function SiteHeader() {
   const person = guest ? null : PEOPLE[role];
 
   return (
-    <header className="sticky top-0 z-50 border-b-2 border-ink bg-background/92 backdrop-blur-md">
+    <header
+      data-site-header
+      className="sticky top-0 z-50 border-b-2 border-ink bg-background/92 backdrop-blur-md"
+    >
       <div className="container-page flex h-[72px] items-center gap-3">
         <Logo />
 

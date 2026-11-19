@@ -5,7 +5,10 @@ import { footerNav } from "@/lib/nav";
 
 export function SiteFooter() {
   return (
-    <footer className="border-t-2 border-ink bg-[#060605] text-[#f9f9f6]">
+    <footer
+      data-site-footer
+      className="border-t-2 border-ink bg-[#060605] text-[#f9f9f6]"
+    >
       <div className="container-page pt-14 pb-8">
         <div className="grid gap-10 lg:grid-cols-[1.1fr_2.2fr] lg:gap-16">
           <div className="grid content-start gap-5">
