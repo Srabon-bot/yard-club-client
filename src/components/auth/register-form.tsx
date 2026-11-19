@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/lib/types";
+import { authClient } from "@/lib/auth-client";
 
 type Role = Extract<UserRole, "customer" | "owner">;
 
@@ -42,31 +43,72 @@ export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleRegister = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const data = {
-      role,
-      name: formData.get("name") as string,
-      email: formData.get("email") as string,
-      phone: formData.get("phone") as string,
-      photoUrl: formData.get("photoUrl") as string,
-      password: formData.get("password") as string,
-      terms: formData.get("terms") === "on",
-    };
 
-    console.log("[Register Form Data]:", data);
+    const name = (formData.get("name") as string)?.trim();
+    const email = (formData.get("email") as string)?.trim().toLowerCase();
+    const phone = (formData.get("phone") as string)?.trim();
+    const photoUrl = (formData.get("photoUrl") as string)?.trim();
+    const password = formData.get("password") as string;
+    const terms = formData.get("terms") === "on";
+
+    if (!terms) {
+      toast.error("Please agree to the rental terms and handover policy.");
+      return;
+    }
+
+    // Password validation per Assignment 9 specification:
+    // Must have uppercase, lowercase, and minimum 6 characters
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters long.");
+      return;
+    }
+    if (!/[A-Z]/.test(password)) {
+      toast.error("Password must contain at least one uppercase letter (A-Z).");
+      return;
+    }
+    if (!/[a-z]/.test(password)) {
+      toast.error("Password must contain at least one lowercase letter (a-z).");
+      return;
+    }
 
     setLoading(true);
-    window.setTimeout(() => {
-      toast.success("Account created", {
+
+    try {
+      const result = await authClient.signUp.email({
+        name,
+        email,
+        password,
+        image: photoUrl || undefined,
+        // @ts-expect-error - Better-auth custom fields
+        role,
+        phone,
+      });
+
+      if (result.error) {
+        toast.error("Registration failed", {
+          description: result.error.message || "An error occurred while creating your account.",
+        });
+        setLoading(false);
+        return;
+      }
+
+      toast.success("Account created successfully!", {
         description:
           role === "owner"
-            ? "Your yard dashboard is ready. Add your first listing."
-            : "Your customer dashboard is ready.",
+            ? "Welcome to Yardclub. Opening your owner yard dashboard."
+            : "Welcome to Yardclub. Opening your customer dashboard.",
       });
+
       router.push(role === "owner" ? "/owner" : "/dashboard");
-    }, 700);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Something went wrong during sign up.";
+      toast.error("Sign up error", { description: message });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -124,7 +166,7 @@ export function RegisterForm() {
         <span className="h-px flex-1 bg-ink/15" />
       </div>
 
-      <form className="grid gap-4" onSubmit={handleSubmit}>
+      <form className="grid gap-4" onSubmit={handleRegister}>
         <div className="grid gap-1.5">
           <Label htmlFor="register-name" className="text-xs font-semibold">
             Full name
@@ -200,7 +242,7 @@ export function RegisterForm() {
               id="register-photo"
               name="photoUrl"
               type="url"
-              placeholder="https://i.ibb.co/... or profile image link"
+              placeholder="https://i.ibb.co/... or direct image link"
               className="h-11 rounded-[6px] border-2 border-ink bg-surface pl-9 text-sm"
             />
           </div>
@@ -223,9 +265,8 @@ export function RegisterForm() {
               name="password"
               type={showPassword ? "text" : "password"}
               required
-              minLength={6}
               autoComplete="new-password"
-              placeholder="At least 6 characters (upper, lower)"
+              placeholder="Min 6 chars, uppercase & lowercase"
               className="h-11 rounded-[6px] border-2 border-ink bg-surface pl-9 pr-11 text-sm"
             />
             <button
