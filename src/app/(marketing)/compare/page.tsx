@@ -16,7 +16,9 @@ export const metadata: Metadata = {
 
 export default async function ComparePage({
   searchParams,
-}: PageProps<"/compare">) {
+}: {
+  searchParams: Promise<{ ids?: string }>;
+}) {
   const sp = await searchParams;
   const idsString = typeof sp.ids === "string" ? sp.ids : "";
   const ids = idsString ? idsString.split(",").filter(Boolean) : [];
