@@ -1,21 +1,29 @@
-import type { Metadata } from "next";
-import { PhasePlaceholder } from "@/components/site/phase-placeholder";
+"use client";
 
-export const metadata: Metadata = { title: 'Admin profile' };
+import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import { DashboardHeading, Panel } from "@/components/dashboard/parts";
+import { PasswordForm, ProfileForm } from "@/components/dashboard/profile-form";
+import { currentAdmin } from "@/lib/mock/users";
 
-export default function Page() {
+export default function AdminProfilePage() {
   return (
-    <PhasePlaceholder
-      phase="08"
-      title='Your operator account'
-      description='Admin identity, access level and security settings. Deliberately smaller than the other profiles.'
-      sections={[
-      'Identity and contact fields',
-      'Access-level summary',
-      'Password and session panel',
-      'Audit note',
-      ]}
-      parent={{ label: 'Overview', href: '/admin' }}
-    />
+    <DashboardShell>
+      <div className="grid gap-6">
+        <DashboardHeading
+          eyebrow="Admin"
+          title="Admin profile"
+          description="Your Yardclub administrator account details."
+        />
+
+        <ProfileForm user={currentAdmin} />
+
+        <Panel
+          title="Password"
+          description="Update your sign-in password."
+        >
+          <PasswordForm />
+        </Panel>
+      </div>
+    </DashboardShell>
   );
 }
