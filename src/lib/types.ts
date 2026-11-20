@@ -49,6 +49,8 @@ export type Equipment = {
   condition: "A" | "B" | "C";
   image: string;
   ownerId: string;
+  ownerSlug?: string;
+  slug?: string;
   status: EquipmentStatus;
   rating: number;
   reviewCount: number;
