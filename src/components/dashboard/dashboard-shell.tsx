@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { dashboardNav, type DashboardRole } from "@/lib/nav";
 import { cn } from "@/lib/utils";
+import { useSession } from "@/lib/auth-client";
 
 const ICONS = {
   grid: LayoutGrid,
@@ -56,12 +57,51 @@ function roleFromPath(pathname: string): DashboardRole {
   return "customer";
 }
 
+function isDashboardRole(value: unknown): value is DashboardRole {
+  return value === "customer" || value === "owner" || value === "admin";
+}
+
+function initialsFor(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "YC";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+}
+
+const ROOTS: Record<DashboardRole, string> = {
+  customer: "/dashboard",
+  owner: "/owner",
+  admin: "/admin",
+};
+
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const role = roleFromPath(pathname);
-  const persona = PERSONAS[role];
+  const { data: session } = useSession();
+
+  const liveUser = session?.user as
+    | {
+        name?: string | null;
+        email?: string | null;
+        role?: string | null;
+      }
+    | undefined;
+  const sessionRole = isDashboardRole(liveUser?.role) ? liveUser.role : null;
+  const routeRole = roleFromPath(pathname);
+  const role = sessionRole ?? routeRole;
+  const fallbackPersona = PERSONAS[role];
+
+  const persona =
+    liveUser && sessionRole
+      ? {
+          name: liveUser.name || "Yardclub user",
+          initials: initialsFor(liveUser.name || "Yardclub user"),
+          label: fallbackPersona.label,
+          email: liveUser.email || "",
+        }
+      : fallbackPersona;
+
   const links = dashboardNav[role];
-  const root = role === "customer" ? "/dashboard" : role === "owner" ? "/owner" : "/admin";
+  const root = ROOTS[role];
 
   const isActive = (href: string) =>
     href === root ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
@@ -111,7 +151,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <div className="mt-3 border-t-2 border-ink pt-3">
               <p className="flex items-start gap-2 px-1.5 font-mono text-[9px] leading-relaxed uppercase tracking-[0.1em] text-ink-soft">
                 <i className="mt-1 size-1.5 shrink-0 rounded-full bg-lime" aria-hidden="true" />
-                Preview data. No live payments.
+                Equipment is live. Bookings are sample data.
               </p>
             </div>
           </div>
