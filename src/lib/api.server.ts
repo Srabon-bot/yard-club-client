@@ -2,30 +2,22 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import type { UserRole } from "@/lib/types";
 
-const API_URL =
-  process.env.API_URL ??
-  process.env.NEXT_PUBLIC_API_URL ??
-  "http://localhost:5000";
+const API_URL = process.env.API_URL ?? "http://localhost:5000";
 
 const API_INTERNAL_KEY = process.env.API_INTERNAL_KEY;
 
 export type SessionUser = {
   id: string;
-  name: string;
-  email: string;
-  image: string | null;
   role: UserRole;
 };
 
 export class ApiError extends Error {
   status: number;
-  field?: string;
 
-  constructor(message: string, status: number, field?: string) {
+  constructor(message: string, status: number) {
     super(message);
     this.name = "ApiError";
     this.status = status;
-    this.field = field;
   }
 }
 
@@ -49,9 +41,6 @@ export async function getSessionUser(): Promise<SessionUser | null> {
 
   return {
     id: String(user.id),
-    name: user.name || "Yardclub user",
-    email: user.email || "",
-    image: user.image || null,
     role: asRole(user.role),
   };
 }
@@ -92,14 +81,13 @@ export async function apiFetch<T>(
   }
 
   const payload = (await response.json().catch(() => null)) as
-    | (Record<string, unknown> & { error?: string; field?: string })
+    | (Record<string, unknown> & { error?: string })
     | null;
 
   if (!response.ok) {
     throw new ApiError(
       payload?.error || "Something went wrong. Please try again.",
       response.status,
-      payload?.field,
     );
   }
 
