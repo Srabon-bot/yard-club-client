@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { createEquipmentAction } from "@/lib/actions/equipment";
 
 const CATEGORIES = [
   { value: "construction", label: "Construction" },
@@ -62,7 +64,9 @@ function FieldGroup({
 
 export default function OwnerAddEquipmentPage() {
   const [loading, setLoading] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [created, setCreated] = useState<{ id: string; name: string } | null>(
+    null,
+  );
   const [rentalTypes, setRentalTypes] = useState<string[]>(["daily"]);
 
   const toggleRentalType = (value: string) => {
@@ -71,23 +75,35 @@ export default function OwnerAddEquipmentPage() {
     );
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (rentalTypes.length === 0) {
       toast.error("Choose at least one rental type.");
       return;
     }
+
+    const formData = new FormData(event.currentTarget);
     setLoading(true);
-    window.setTimeout(() => {
-      setLoading(false);
-      setSubmitted(true);
+
+    try {
+      const result = await createEquipmentAction(formData);
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+
+      setCreated({ id: result.id, name: result.name });
       toast.success("Listing submitted for approval", {
-        description: "Our team reviews new listings within 24 hours.",
+        description: `${result.name} is pending admin review.`,
       });
-    }, 800);
+    } catch {
+      toast.error("Could not save the listing. Try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (submitted) {
+  if (created) {
     return (
       <DashboardShell>
         <div className="grid place-items-center gap-5 rounded-[10px] border-2 border-ink bg-surface px-6 py-16 text-center shadow-offset-sm">
@@ -97,13 +113,19 @@ export default function OwnerAddEquipmentPage() {
           <div>
             <p className="display-3">Listing submitted</p>
             <p className="mt-2 max-w-[48ch] text-sm leading-relaxed text-ink-soft">
-              Your equipment is now under review. It will appear on the
-              catalogue after admin approval, usually within 24 hours.
+              <strong>{created.name}</strong> is now under review. It will
+              appear on the catalogue after admin approval, usually within 24
+              hours.
             </p>
           </div>
-          <Button onClick={() => setSubmitted(false)} variant="outline">
-            Add another listing
-          </Button>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Button asChild>
+              <Link href="/owner/equipment">View my equipment</Link>
+            </Button>
+            <Button onClick={() => setCreated(null)} variant="outline">
+              Add another listing
+            </Button>
+          </div>
         </div>
       </DashboardShell>
     );
@@ -253,6 +275,8 @@ export default function OwnerAddEquipmentPage() {
                       >
                         <input
                           type="checkbox"
+                          name="rentalTypes"
+                          value={rt.value}
                           checked={rentalTypes.includes(rt.value)}
                           onChange={() => toggleRentalType(rt.value)}
                           className="size-4 accent-[var(--lime)]"
