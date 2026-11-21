@@ -4,11 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getEquipmentByIds, isAvailableNow } from "@/lib/data/equipment";
 import { formatBDT } from "@/lib/format";
 import { bypassImageOptimization } from "@/lib/images";
-import { equipment as allEquipment } from "@/lib/mock/equipment";
-import { isAvailableNow } from "@/lib/data/equipment";
 import { StatusBadge } from "@/components/site/status-badge";
+import type { Equipment } from "@/lib/types";
 
 export const metadata: Metadata = {
   title: "Compare Equipment Side by Side",
@@ -23,11 +23,8 @@ async function CompareContent({
 }) {
   const sp = await searchParams;
   const idsString = typeof sp.ids === "string" ? sp.ids : "";
-  const ids = idsString ? idsString.split(",").filter(Boolean) : [];
-
-  const items = ids
-    .map((id) => allEquipment.find((e) => e.id === id))
-    .filter((e): e is (typeof allEquipment)[number] => Boolean(e));
+  const ids = idsString ? idsString.split(",").filter(Boolean).slice(0, 3) : [];
+  const items = ids.length ? await getEquipmentByIds(ids) : [];
 
   if (items.length === 0) {
     return (
@@ -51,21 +48,21 @@ async function CompareContent({
   }
 
   const specRows = [
-    { label: "Category", render: (item: (typeof items)[0]) => item.category },
-    { label: "Brand", render: (item: (typeof items)[0]) => item.brand },
-    { label: "Model", render: (item: (typeof items)[0]) => item.model },
+    { label: "Category", render: (item: Equipment) => item.category },
+    { label: "Brand", render: (item: Equipment) => item.brand },
+    { label: "Model", render: (item: Equipment) => item.model },
     {
       label: "Condition",
-      render: (item: (typeof items)[0]) => `${item.condition}-grade`,
+      render: (item: Equipment) => `${item.condition}-grade`,
     },
-    { label: "Location", render: (item: (typeof items)[0]) => item.location },
+    { label: "Location", render: (item: Equipment) => item.location },
     {
       label: "Available Units",
-      render: (item: (typeof items)[0]) => `${item.quantity} in yard`,
+      render: (item: Equipment) => `${item.quantity} in yard`,
     },
     {
       label: "Rental Options",
-      render: (item: (typeof items)[0]) => item.rentalTypes.join(", "),
+      render: (item: Equipment) => item.rentalTypes.join(", "),
     },
   ];
 

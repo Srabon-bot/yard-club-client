@@ -8,10 +8,10 @@ import { Button } from "@/components/ui/button";
 
 export default function EquipmentError({
   error,
-  reset,
+  retry,
 }: {
   error: Error & { digest?: string };
-  reset: () => void;
+  retry: () => void;
 }) {
   useEffect(() => {
     console.error(error);
@@ -27,7 +27,7 @@ export default function EquipmentError({
           URL, so trying again should bring back the same set.
         </p>
         <div className="mt-7 flex flex-col gap-2 sm:flex-row">
-          <Button type="button" onClick={reset} className="h-11">
+          <Button type="button" onClick={retry} className="h-11">
             <RotateCcw className="size-4" aria-hidden="true" />
             Try again
           </Button>

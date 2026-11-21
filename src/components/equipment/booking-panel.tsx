@@ -159,7 +159,13 @@ export function BookingPanel({
             <CalendarDays className="size-3.5" aria-hidden="true" />
             Free cancellation up to 48h
           </span>
-          <CompareToggle id={item.id} name={item.name} withLabel />
+          <CompareToggle
+            id={item.id}
+            name={item.name}
+            location={item.location}
+            image={item.image}
+            withLabel
+          />
         </div>
       </form>
     </div>

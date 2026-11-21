@@ -8,7 +8,6 @@ import {
   Home,
   Layers,
   LayoutDashboard,
-  Search,
   Settings,
   Truck,
   User,
@@ -23,7 +22,6 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import { equipment } from "@/lib/mock/equipment";
 
 export function CommandPalette() {
   const [open, setOpen] = React.useState(false);
@@ -98,23 +96,6 @@ export function CommandPalette() {
               <User className="mr-2 size-4" />
               <span>Contact Us</span>
             </CommandItem>
-          </CommandGroup>
-          <CommandSeparator />
-          <CommandGroup heading="Equipment Quick Jump">
-            {equipment.slice(0, 8).map((item) => (
-              <CommandItem
-                key={item.id}
-                onSelect={() =>
-                  runCommand(() => router.push(`/equipment/${item.id}`))
-                }
-              >
-                <Search className="mr-2 size-4 text-lime" />
-                <span>{item.name}</span>
-                <span className="ml-auto font-mono text-[10px] text-ink-soft">
-                  {item.location}
-                </span>
-              </CommandItem>
-            ))}
           </CommandGroup>
           <CommandSeparator />
           <CommandGroup heading="Dashboards">

@@ -11,7 +11,6 @@ import { StatusBadge } from "@/components/site/status-badge";
 import { Button } from "@/components/ui/button";
 import { listCategories } from "@/lib/data/categories";
 import { getEquipmentStats, listEquipment } from "@/lib/data/equipment";
-import { listOwners } from "@/lib/data/owners";
 import {
   SORT_LABEL,
   SORT_OPTIONS,
@@ -233,24 +232,25 @@ async function Catalog({
 }) {
   const parsed = parseCatalogState(await searchParams);
 
-  const [result, owners] = await Promise.all([
-    listEquipment({
-      q: parsed.q || undefined,
-      category: parsed.category,
-      location: parsed.location === "all" ? undefined : parsed.location,
-      rentalType: parsed.rentalType,
-      availability: parsed.availability,
-      minPrice: parsed.min,
-      maxPrice: parsed.max,
-      sort: parsed.sort,
-      page: parsed.page,
-      perPage: 9,
-    }),
-    listOwners(),
-  ]);
+  const result = await listEquipment({
+    q: parsed.q || undefined,
+    category: parsed.category,
+    location: parsed.location === "all" ? undefined : parsed.location,
+    rentalType: parsed.rentalType,
+    availability: parsed.availability,
+    minPrice: parsed.min,
+    maxPrice: parsed.max,
+    sort: parsed.sort,
+    page: parsed.page,
+    perPage: 9,
+  });
 
   const state: CatalogState = { ...parsed, page: result.page };
-  const ownersById = new Map(owners.map((owner) => [owner.id, owner]));
+  const ownersById = new Map(
+    result.items
+      .filter((item) => item.owner)
+      .map((item) => [item.ownerId, item.owner!] as const),
+  );
   const categoryNames = new Map(
     categories.map((category) => [category.id, category.name]),
   );

@@ -1,10 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useActionState, useState } from "react";
 import {
   CalendarDays,
   Check,
+  Loader2,
   LockKeyhole,
   Minus,
   Plus,
@@ -13,10 +14,10 @@ import {
 import { CompareToggle } from "@/components/compare/compare-toggle";
 import { StatusBadge } from "@/components/site/status-badge";
 import { Button } from "@/components/ui/button";
-import type { EquipmentHold } from "@/lib/data/bookings";
+import { createBookingAction } from "@/lib/actions/bookings";
 import { daysBetween, formatBDT } from "@/lib/format";
 import { bypassImageOptimization } from "@/lib/images";
-import type { Equipment, Owner } from "@/lib/types";
+import type { Equipment, EquipmentHold, Owner } from "@/lib/types";
 
 const pad = (value: number) => String(value).padStart(2, "0");
 
@@ -59,17 +60,26 @@ export function BookingForm({
     return Math.min(item.quantity, Math.max(1, Number.isFinite(parsed) ? parsed : 1));
   });
   const [agreed, setAgreed] = useState(false);
+  const [state, formAction, pending] = useActionState(
+    createBookingAction,
+    undefined,
+  );
 
   const days = daysBetween(start, end);
   const total = item.pricePerDay * quantity * days;
 
   const overlapping = holds.filter(
     (hold) =>
-      (hold.status === "active" || hold.status === "upcoming") &&
+      (hold.status === "active" ||
+        hold.status === "upcoming" ||
+        hold.status === "pending") &&
       start <= hold.endDate &&
       end >= hold.startDate,
   );
-  const heldUnits = overlapping.reduce((sum, hold) => sum + hold.quantity, 0);
+  const heldUnits = overlapping.reduce(
+    (sum, hold) => sum + (hold.quantity ?? 1),
+    0,
+  );
   const availableUnits = Math.max(0, item.quantity - heldUnits);
   const over = quantity > availableUnits;
 
@@ -85,11 +95,11 @@ export function BookingForm({
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
       <form
         id="booking-form"
-        action="/payment"
-        method="get"
+        action={formAction}
         className="grid gap-7 rounded-[10px] border-2 border-ink bg-surface p-5 shadow-offset-sm sm:p-6"
       >
-        <input type="hidden" name="equipment" value={item.id} />
+        <input type="hidden" name="equipmentId" value={item.id} />
+        <input type="hidden" name="equipmentSlug" value={item.slug ?? item.id} />
 
         <fieldset>
           <legend className="eyebrow">01 · Rental window</legend>
@@ -100,7 +110,7 @@ export function BookingForm({
               </span>
               <input
                 type="date"
-                name="start"
+                name="startDate"
                 value={start}
                 min={nextOpen ?? today}
                 onChange={(event) => changeStart(event.target.value)}
@@ -114,7 +124,7 @@ export function BookingForm({
               </span>
               <input
                 type="date"
-                name="end"
+                name="endDate"
                 value={end}
                 min={addDays(start, 1)}
                 onChange={(event) => setEnd(event.target.value)}
@@ -139,7 +149,7 @@ export function BookingForm({
                 </button>
                 <input
                   type="number"
-                  name="qty"
+                  name="quantity"
                   min={1}
                   max={item.quantity}
                   value={quantity}
@@ -287,14 +297,29 @@ export function BookingForm({
             <Button
               type="submit"
               form="booking-form"
-              disabled={over || !agreed}
+              disabled={over || !agreed || pending}
               className="h-11 w-full"
             >
-              Continue to payment
+              {pending ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                  Sending request…
+                </>
+              ) : (
+                "Send booking request"
+              )}
             </Button>
+            {state && !state.ok && (
+              <p
+                role="alert"
+                className="mt-2 rounded-[6px] border border-red-300 bg-red-50 px-2.5 py-2 text-[11px] leading-relaxed text-red-700 dark:bg-red-950/40 dark:text-red-300"
+              >
+                {state.error}
+              </p>
+            )}
             <p className="mt-2.5 flex items-start gap-1.5 text-[11px] leading-relaxed text-ink-soft">
               <LockKeyhole className="mt-0.5 size-3.5 shrink-0 text-success" aria-hidden="true" />
-              Stripe checkout opens next. The deposit is settled at handover.
+              No payment is taken yet. The owner confirms the dates first.
             </p>
             {!agreed && !over && (
               <p className="mt-2 font-mono text-[9px] uppercase tracking-[0.06em] text-ink-soft">
@@ -306,7 +331,13 @@ export function BookingForm({
                 <CalendarDays className="size-3.5" aria-hidden="true" />
                 Free cancellation 48h
               </span>
-              <CompareToggle id={item.id} name={item.name} withLabel />
+              <CompareToggle
+                id={item.id}
+                name={item.name}
+                location={item.location}
+                image={item.image}
+                withLabel
+              />
             </div>
           </div>
         </div>
@@ -334,7 +365,7 @@ export function BookingAssurance({ item }: { item: Equipment }) {
       {[
         `${item.quantity} unit${item.quantity === 1 ? "" : "s"} available`,
         "Handover checklist",
-        "Stripe payment",
+        "Owner confirmation",
       ].map((line) => (
         <span
           key={line}

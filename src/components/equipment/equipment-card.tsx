@@ -56,7 +56,12 @@ export function EquipmentCard({
           {item.condition}-grade
         </span>
         <span className="absolute bottom-3 right-3">
-          <CompareToggle id={item.id} name={item.name} />
+          <CompareToggle
+            id={item.id}
+            name={item.name}
+            location={item.location}
+            image={item.image}
+          />
         </span>
       </div>
 

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, MapPin, Shield, Star, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { analytics } from "@/lib/mock/analytics";
+import { getPlatformStats } from "@/lib/data/stats";
 import { formatCompactBDT } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -34,20 +34,22 @@ const PRINCIPLES = [
   },
 ];
 
-const STATS = [
-  { label: "Equipment listings", value: String(analytics.totals.equipment) },
-  {
-    label: "Completed rentals",
-    value: String(analytics.totals.completedRentals),
-  },
-  {
-    label: "Platform revenue",
-    value: formatCompactBDT(analytics.totals.revenue),
-  },
-  { label: "Registered users", value: analytics.totals.users.toLocaleString() },
-];
+export default async function AboutPage() {
+  const stats = await getPlatformStats();
 
-export default function AboutPage() {
+  const statsCards = [
+    { label: "Equipment listings", value: String(stats.equipment.approved) },
+    {
+      label: "Rental requests",
+      value: String(stats.bookings.total),
+    },
+    {
+      label: "Booking value",
+      value: formatCompactBDT(stats.bookings.revenue),
+    },
+    { label: "Registered users", value: stats.users.total.toLocaleString() },
+  ];
+
   return (
     <>
       {/* Hero */}
@@ -96,7 +98,7 @@ export default function AboutPage() {
 
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4">
-              {STATS.map((stat) => (
+              {statsCards.map((stat) => (
                 <div
                   key={stat.label}
                   className="rounded-[10px] border-2 border-ink bg-surface p-5 shadow-offset-sm"

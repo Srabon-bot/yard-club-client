@@ -5,18 +5,11 @@ import Link from "next/link";
 import { ArrowRight, X } from "lucide-react";
 import { useCompare } from "@/components/compare/compare-provider";
 import { bypassImageOptimization } from "@/lib/images";
-import { equipment } from "@/lib/mock/equipment";
 
 export function CompareTray() {
-  const { ids, ready, remove, clear } = useCompare();
+  const { items, ready, remove, clear } = useCompare();
 
-  if (!ready || ids.length === 0) return null;
-
-  const items = ids
-    .map((id) => equipment.find((item) => item.id === id))
-    .filter((item): item is (typeof equipment)[number] => Boolean(item));
-
-  if (items.length === 0) return null;
+  if (!ready || items.length === 0) return null;
 
   return (
     <aside

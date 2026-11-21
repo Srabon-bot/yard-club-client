@@ -7,11 +7,15 @@ import { cn } from "@/lib/utils";
 export function CompareToggle({
   id,
   name,
+  location,
+  image,
   className,
   withLabel = false,
 }: {
   id: string;
   name: string;
+  location: string;
+  image: string;
   className?: string;
   withLabel?: boolean;
 }) {
@@ -21,7 +25,7 @@ export function CompareToggle({
   return (
     <button
       type="button"
-      onClick={() => toggle(id)}
+      onClick={() => toggle({ id, name, location, image })}
       aria-pressed={active}
       aria-label={active ? `Remove ${name} from compare` : `Add ${name} to compare`}
       title={active ? "Remove from compare" : "Add to compare"}

@@ -12,13 +12,31 @@ import { useHydrated } from "@/lib/use-hydrated";
 
 const STORAGE_KEY = "yardclub-compare";
 const MAX_ITEMS = 3;
-const EMPTY: string[] = [];
+const EMPTY: CompareItem[] = [];
+
+export type CompareItem = {
+  id: string;
+  name: string;
+  location: string;
+  image: string;
+};
 
 let cachedRaw: string | null | undefined;
-let cachedIds: string[] = EMPTY;
+let cachedItems: CompareItem[] = EMPTY;
 const listeners = new Set<() => void>();
 
-function readIds(): string[] {
+function isCompareItem(value: unknown): value is CompareItem {
+  if (!value || typeof value !== "object") return false;
+  const item = value as Record<string, unknown>;
+  return (
+    typeof item.id === "string" &&
+    typeof item.name === "string" &&
+    typeof item.location === "string" &&
+    typeof item.image === "string"
+  );
+}
+
+function readItems(): CompareItem[] {
   let raw: string | null;
   try {
     raw = window.localStorage.getItem(STORAGE_KEY);
@@ -26,27 +44,27 @@ function readIds(): string[] {
     return EMPTY;
   }
 
-  if (raw === cachedRaw) return cachedIds;
+  if (raw === cachedRaw) return cachedItems;
   cachedRaw = raw;
 
   if (!raw) {
-    cachedIds = EMPTY;
-    return cachedIds;
+    cachedItems = EMPTY;
+    return cachedItems;
   }
 
   try {
     const parsed: unknown = JSON.parse(raw);
-    cachedIds = Array.isArray(parsed)
-      ? parsed.filter((id): id is string => typeof id === "string").slice(0, MAX_ITEMS)
+    cachedItems = Array.isArray(parsed)
+      ? parsed.filter(isCompareItem).slice(0, MAX_ITEMS)
       : EMPTY;
   } catch {
-    cachedIds = EMPTY;
+    cachedItems = EMPTY;
   }
 
-  return cachedIds;
+  return cachedItems;
 }
 
-function getServerSnapshot(): string[] {
+function getServerSnapshot(): CompareItem[] {
   return EMPTY;
 }
 
@@ -63,9 +81,9 @@ function subscribe(callback: () => void) {
   };
 }
 
-function writeIds(ids: string[]) {
-  cachedRaw = JSON.stringify(ids);
-  cachedIds = ids;
+function writeItems(items: CompareItem[]) {
+  cachedRaw = JSON.stringify(items);
+  cachedItems = items;
 
   try {
     window.localStorage.setItem(STORAGE_KEY, cachedRaw);
@@ -77,10 +95,11 @@ function writeIds(ids: string[]) {
 }
 
 type CompareValue = {
+  items: CompareItem[];
   ids: string[];
   ready: boolean;
   has: (id: string) => boolean;
-  toggle: (id: string) => void;
+  toggle: (item: CompareItem) => void;
   remove: (id: string) => void;
   clear: () => void;
 };
@@ -94,38 +113,39 @@ export function useCompare() {
 }
 
 export function CompareProvider({ children }: { children: React.ReactNode }) {
-  const ids = useSyncExternalStore(subscribe, readIds, getServerSnapshot);
+  const items = useSyncExternalStore(subscribe, readItems, getServerSnapshot);
   const ready = useHydrated();
 
-  const toggle = useCallback((id: string) => {
-    const current = readIds();
-    if (current.includes(id)) {
-      writeIds(current.filter((entry) => entry !== id));
+  const toggle = useCallback((item: CompareItem) => {
+    const current = readItems();
+    if (current.some((entry) => entry.id === item.id)) {
+      writeItems(current.filter((entry) => entry.id !== item.id));
       return;
     }
     if (current.length >= MAX_ITEMS) {
       toast.info(`Compare holds ${MAX_ITEMS} items. Remove one first.`);
       return;
     }
-    writeIds([...current, id]);
+    writeItems([...current, item]);
   }, []);
 
   const remove = useCallback((id: string) => {
-    writeIds(readIds().filter((entry) => entry !== id));
+    writeItems(readItems().filter((entry) => entry.id !== id));
   }, []);
 
-  const clear = useCallback(() => writeIds([]), []);
+  const clear = useCallback(() => writeItems([]), []);
 
   const value = useMemo(
     () => ({
-      ids,
+      items,
+      ids: items.map((item) => item.id),
       ready,
-      has: (id: string) => ids.includes(id),
+      has: (id: string) => items.some((item) => item.id === id),
       toggle,
       remove,
       clear,
     }),
-    [ids, ready, toggle, remove, clear],
+    [items, ready, toggle, remove, clear],
   );
 
   return (

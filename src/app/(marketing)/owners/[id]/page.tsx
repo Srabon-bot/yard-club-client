@@ -11,15 +11,9 @@ import {
 import { EquipmentCard } from "@/components/equipment/equipment-card";
 import { StarRating } from "@/components/site/star-rating";
 import { Button } from "@/components/ui/button";
-import { getOwner, getOwnerListings } from "@/lib/data/owners";
-import { listReviews } from "@/lib/data/reviews";
+import { getOwner, getOwnerDetail } from "@/lib/data/owners";
 import { isAvailableNow } from "@/lib/data/equipment";
 import { formatDate } from "@/lib/format";
-import { owners } from "@/lib/mock/owners";
-
-export function generateStaticParams() {
-  return owners.map((owner) => ({ id: owner.id }));
-}
 
 export async function generateMetadata({
   params,
@@ -36,13 +30,11 @@ export default async function OwnerProfilePage({
   params,
 }: PageProps<"/owners/[id]">) {
   const { id } = await params;
-  const owner = await getOwner(id);
-  if (!owner) notFound();
+  const detail = await getOwnerDetail(id);
+  if (!detail) notFound();
 
-  const [listings, allReviews] = await Promise.all([
-    getOwnerListings(owner.id),
-    listReviews(),
-  ]);
+  const { owner, listings } = detail;
+  const allReviews = detail.reviews;
 
   const availabilityMap: Record<string, boolean> = {};
   for (const item of listings) {
@@ -166,6 +158,11 @@ export default async function OwnerProfilePage({
           <p className="eyebrow">Verified Feedback</p>
           <h2 className="display-2 mt-1">Customer Reviews</h2>
 
+          {allReviews.length === 0 ? (
+            <p className="mt-8 rounded-[10px] border border-ink/15 bg-secondary/20 p-6 text-sm text-ink-soft">
+              No written reviews for this yard yet.
+            </p>
+          ) : (
           <div className="mt-8 grid gap-6 md:grid-cols-2">
             {allReviews.slice(0, 4).map((r) => (
               <div
@@ -193,6 +190,7 @@ export default async function OwnerProfilePage({
               </div>
             ))}
           </div>
+          )}
         </div>
       </section>
     </>

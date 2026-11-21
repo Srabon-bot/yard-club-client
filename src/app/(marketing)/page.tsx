@@ -23,12 +23,12 @@ import {
 import { StarRating } from "@/components/site/star-rating";
 import { StatusBadge } from "@/components/site/status-badge";
 import { Button } from "@/components/ui/button";
-import { getAdminAnalytics } from "@/lib/data/analytics";
 import { getNextAvailableDate } from "@/lib/data/bookings";
 import { getFeaturedEquipment, isAvailableNow } from "@/lib/data/equipment";
 import { listCategories } from "@/lib/data/categories";
 import { listOwners } from "@/lib/data/owners";
 import { getFeaturedReviews } from "@/lib/data/reviews";
+import { getPlatformStats } from "@/lib/data/stats";
 import { formatBDT, formatShortDate } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -39,15 +39,6 @@ export const metadata: Metadata = {
     "Rent excavators, cinema kits, trailers, generators and farm equipment from verified owners in Dhaka and Chattogram. Daily and weekly rates in BDT.",
 };
 
-const ticker = [
-  "CAT 320 booked for a foundation job in Bashundhara",
-  "Sony FX6 back in the kit on 4 December",
-  "250kVA generator booked for a launch in Gulshan",
-  "10m scissor lift open in Tejgaon",
-  "Massey Ferguson 385 free from 28 November",
-  "10m pagoda tent awaiting approval",
-  "14ft trailer returned this morning",
-];
 
 const benefits = [
   {
@@ -67,8 +58,8 @@ const benefits = [
   },
   {
     icon: ShieldCheck,
-    title: "Payment on record",
-    copy: "Checkout runs through Stripe. The payment and deposit stay attached to the booking, not a message thread.",
+    title: "Request first",
+    copy: "Send a dated request, let the owner confirm, and keep every quote and handover detail with the booking.",
   },
 ] as const;
 
@@ -79,7 +70,7 @@ const steps = [
   },
   {
     title: "Hold the dates",
-    copy: "Choose start and end dates, quantity and delivery address. The total updates before you reach checkout.",
+    copy: "Choose start and end dates, quantity and delivery address. The owner reviews the request before payment is enabled.",
   },
   {
     title: "Inspect and go",
@@ -88,13 +79,27 @@ const steps = [
 ] as const;
 
 export default async function HomePage() {
-  const [featured, categories, owners, reviews, analytics] = await Promise.all([
+  const [featured, categories, owners, reviews, stats] = await Promise.all([
     getFeaturedEquipment(6),
     listCategories(),
     listOwners(),
     getFeaturedReviews(4),
-    getAdminAnalytics(),
+    getPlatformStats(),
   ]);
+
+  const ticker = [
+    `${stats.equipment.approved} approved listings`,
+    `${stats.equipment.available} available today`,
+    `${stats.users.owners} verified owners`,
+    `${stats.bookings.completed} rentals completed`,
+    ...featured.slice(0, 3).map((item) => `${item.name} · ${item.location}`),
+  ];
+
+  const rating = stats.averageRating ||
+    (reviews.length
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+      : 0);
+  const ratingLabel = rating > 0 ? rating.toFixed(1) : "New";
 
   const topOwners = [...owners]
     .sort((a, b) => b.rating - a.rating || b.reviewCount - a.reviewCount)
@@ -102,10 +107,13 @@ export default async function HomePage() {
 
   /* The hero photo is the 20-tonne CAT, so the card has to be the CAT.
      Keep the pairing explicit instead of relying on rating order. */
-  const heroItem =
-    featured.find((item) => item.id === "cat-320-excavator") ?? featured[0];
-  const heroOwner = owners.find((owner) => owner.id === heroItem.ownerId);
-  const heroNextOpen = await getNextAvailableDate(heroItem.id);
+  const heroItem = featured[0];
+  const heroOwner = heroItem
+    ? owners.find((owner) => owner.id === heroItem.ownerId)
+    : undefined;
+  const heroNextOpen = heroItem
+    ? await getNextAvailableDate(heroItem.id)
+    : undefined;
 
   return (
     <>
@@ -126,7 +134,7 @@ export default async function HomePage() {
               <div className="flex flex-wrap items-center gap-2.5">
                 <StatusBadge tone="lime">Dhaka · Chattogram</StatusBadge>
                 <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-soft">
-                  {analytics.totals.equipment} machines listed today
+                  {stats.equipment.approved} machines listed today
                 </span>
               </div>
 
@@ -204,9 +212,9 @@ export default async function HomePage() {
                   </span>
                 </div>
                 <p className="inline-flex items-center gap-1.5 text-xs text-ink-soft">
-                  <StarRating value={4.8} />
-                  <span className="font-mono text-[11px]">4.8</span>
-                  <span>from {analytics.totals.completedRentals} completed rentals</span>
+                  <StarRating value={rating} />
+                  <span className="font-mono text-[11px]">{ratingLabel}</span>
+                  <span>from {stats.bookings.completed} completed rentals</span>
                 </p>
               </div>
             </HeroIn>
@@ -311,7 +319,7 @@ export default async function HomePage() {
                 href="/equipment"
                 className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.1em] underline decoration-ink/30 decoration-2 underline-offset-4 transition-colors hover:decoration-ink"
               >
-                All {analytics.totals.equipment} machines
+                All {stats.equipment.approved} machines
                 <ArrowUpRight className="size-3.5" aria-hidden="true" />
               </Link>
             </div>
@@ -402,7 +410,7 @@ export default async function HomePage() {
               className="display-2 mt-4 max-w-[24ch]"
             />
             <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3 font-mono text-[10px] uppercase tracking-[0.1em] text-ink-soft">
-              <span>{analytics.totals.equipment} machines</span>
+              <span>{stats.equipment.approved} machines</span>
               <span className="text-ink/20">/</span>
               <span>{owners.length} verified owners</span>
               <span className="text-ink/20">/</span>
@@ -569,18 +577,18 @@ export default async function HomePage() {
             <SectionIn>
               <p className="eyebrow">Reviews</p>
               <h2 className="display-2 mt-2 max-w-[14ch]">
-                {analytics.totals.completedRentals} rentals completed.
+                {stats.bookings.completed} rentals completed.
               </h2>
               <p className="lede mt-4">
                 Every review below is tied to a closed booking, not a mailing
                 list.
               </p>
               <div className="mt-6 flex items-center gap-3 border-t-2 border-ink pt-5">
-                <span className="font-mono text-4xl font-medium tabular-nums">4.8</span>
+                <span className="font-mono text-4xl font-medium tabular-nums">{ratingLabel}</span>
                 <div>
-                  <StarRating value={4.8} size="md" />
+                  <StarRating value={rating} size="md" />
                   <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.08em] text-ink-soft">
-                    Average across {analytics.totals.completedRentals} rentals
+                    Average across {stats.bookings.completed} rentals
                   </p>
                 </div>
               </div>
@@ -627,7 +635,7 @@ export default async function HomePage() {
                 Find the machine. Get the job done.
               </h2>
               <p className="mt-4 max-w-[46ch] text-sm leading-relaxed text-black/65">
-                {analytics.totals.equipment} listings across Dhaka and
+                {stats.equipment.approved} listings across Dhaka and
                 Chattogram, with rates in BDT and owners who answer.
               </p>
             </SectionIn>

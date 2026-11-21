@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -13,30 +13,22 @@ import {
 import { AvailabilityCalendar } from "@/components/equipment/availability-calendar";
 import { BookingPanel } from "@/components/equipment/booking-panel";
 import { EquipmentCard } from "@/components/equipment/equipment-card";
+import { FavoriteButton } from "@/components/equipment/favorite-button";
 import { MobileBookingBar } from "@/components/equipment/mobile-booking-bar";
 import { StarRating } from "@/components/site/star-rating";
 import { StatusBadge } from "@/components/site/status-badge";
 import { Button } from "@/components/ui/button";
-import {
-  getEquipmentHolds,
-  getNextAvailableDate,
-} from "@/lib/data/bookings";
+import { getSessionUser } from "@/lib/api.server";
 import { getCategory } from "@/lib/data/categories";
 import {
   getEquipmentById,
+  getEquipmentDetail,
   getRelatedEquipment,
   isAvailableNow,
 } from "@/lib/data/equipment";
-import { getOwner, listOwners } from "@/lib/data/owners";
-import { listReviews } from "@/lib/data/reviews";
+import { listFavorites } from "@/lib/data/favorites";
 import { formatBDT, formatDate, formatShortDate } from "@/lib/format";
 import { bypassImageOptimization } from "@/lib/images";
-import { equipment } from "@/lib/mock/equipment";
-import { TODAY_ISO } from "@/lib/today";
-
-export function generateStaticParams() {
-  return equipment.map((item) => ({ id: item.id }));
-}
 
 export async function generateMetadata({
   params,
@@ -59,25 +51,28 @@ export default async function EquipmentDetailPage({
   params,
 }: PageProps<"/equipment/[id]">) {
   const { id } = await params;
-  const item = await getEquipmentById(id);
-  if (!item) notFound();
 
-  const [owner, category, related, reviews, nextOpen, holds, owners] =
-    await Promise.all([
-      getOwner(item.ownerId),
-      getCategory(item.category),
-      getRelatedEquipment(item.id, 3),
-      listReviews(),
-      getNextAvailableDate(item.id),
-      getEquipmentHolds(item.id),
-      listOwners(),
-    ]);
+  const user = await getSessionUser();
+  if (!user) {
+    redirect(`/login?next=${encodeURIComponent(`/equipment/${id}`)}`);
+  }
+
+  const detail = await getEquipmentDetail(id);
+  if (!detail) notFound();
+
+  const { item, owner, holds, nextAvailable, today } = detail;
+
+  const [category, related, favorites] = await Promise.all([
+    getCategory(item.category),
+    getRelatedEquipment(item.id, 3),
+    listFavorites(),
+  ]);
 
   const available = isAvailableNow(item);
   const categoryName = category?.name ?? "Equipment";
-  const itemReviews = reviews.filter((review) => review.equipment === item.name).slice(0, 2);
-
-  const today = TODAY_ISO;
+  const itemReviews = detail.reviews.slice(0, 2);
+  const saved = favorites.some((favorite) => favorite.equipmentId === item.id);
+  const nextOpen = nextAvailable && nextAvailable > today ? nextAvailable : undefined;
 
   const specs: [string, string][] = [
     ["Brand", item.brand],
@@ -156,6 +151,13 @@ export default async function EquipmentDetailPage({
               <p className="font-mono text-[9px] uppercase tracking-[0.08em] text-ink-soft">
                 per day · BDT
               </p>
+              <div className="mt-3 sm:flex sm:justify-end">
+                <FavoriteButton
+                  equipmentId={item.id}
+                  initialSaved={saved}
+                  name={item.name}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -399,11 +401,11 @@ export default async function EquipmentDetailPage({
                 <div className="rounded-[10px] border border-ink/20 bg-secondary/40 p-4">
                   <p className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.08em]">
                     <ShieldCheck className="size-4 text-success" aria-hidden="true" />
-                    Payment on record
+                    Request first
                   </p>
                   <p className="mt-2 text-xs leading-relaxed text-ink-soft">
-                    Checkout runs through Stripe. The rental total and deposit
-                    stay attached to this booking, not a message thread.
+                    Send your dates and quantity, then let the owner confirm.
+                    The quote and handover details stay with the booking.
                   </p>
                 </div>
               </div>
@@ -436,7 +438,7 @@ export default async function EquipmentDetailPage({
                 <EquipmentCard
                   key={entry.id}
                   item={entry}
-                  owner={owners.find((person) => person.id === entry.ownerId)}
+                  owner={entry.owner ?? undefined}
                   categoryName={categoryName}
                   available={isAvailableNow(entry)}
                 />

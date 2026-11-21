@@ -1,6 +1,9 @@
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
 
+// Catalogue and about pages read live API data during the request.
+export const instant = false;
+
 export default function MarketingLayout({
   children,
 }: {
