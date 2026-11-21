@@ -1,7 +1,16 @@
-import { bookings } from "@/lib/mock/bookings";
-import { categories } from "@/lib/mock/categories";
-import { equipment } from "@/lib/mock/equipment";
-import type { CategoryId, Equipment, RentalType } from "@/lib/types";
+import { ApiError, apiFetch, apiPublic } from "@/lib/api.server";
+import { isAvailableNow } from "@/lib/equipment";
+import type {
+  CategoryId,
+  Equipment,
+  EquipmentHold,
+  EquipmentStatus,
+  Owner,
+  RentalType,
+  Review,
+} from "@/lib/types";
+
+export { isAvailableNow };
 
 export type EquipmentSort = "newest" | "price-asc" | "price-desc" | "rating";
 export type AvailabilityFilter = "all" | "available" | "rented";
@@ -17,7 +26,9 @@ export type EquipmentQuery = {
   sort?: EquipmentSort;
   page?: number;
   perPage?: number;
-  includePending?: boolean;
+  ownerId?: string;
+  ownerSlug?: string;
+  featured?: boolean;
 };
 
 export type EquipmentPage = {
@@ -29,93 +40,24 @@ export type EquipmentPage = {
   availability: Record<string, boolean>;
 };
 
-/* An item is available when the quantity on the listing is greater than the
-   units currently out on an active booking. The real API will read the same
-   comparison from the bookings collection. */
-export const isAvailableNow = (item: Equipment) => {
-  const held = bookings
-    .filter(
-      (booking) =>
-        booking.equipmentId === item.id && booking.bookingStatus === "active",
-    )
-    .reduce((total, booking) => total + booking.quantity, 0);
-  return item.quantity - held > 0;
-};
-
-const categoryName = (id: CategoryId) =>
-  categories.find((category) => category.id === id)?.name ?? "";
-
-const matches = (item: Equipment, query: EquipmentQuery) => {
-  if (!query.includePending && item.status !== "approved") return false;
-  if (query.category && query.category !== "all" && item.category !== query.category) {
-    return false;
-  }
-  if (query.location && query.location !== "all" && !item.location.includes(query.location)) {
-    return false;
-  }
-  if (
-    query.rentalType &&
-    query.rentalType !== "all" &&
-    !item.rentalTypes.includes(query.rentalType)
-  ) {
-    return false;
-  }
-  if (query.availability === "available" && !isAvailableNow(item)) return false;
-  if (query.availability === "rented" && isAvailableNow(item)) return false;
-  if (typeof query.minPrice === "number" && item.pricePerDay < query.minPrice) {
-    return false;
-  }
-  if (typeof query.maxPrice === "number" && item.pricePerDay > query.maxPrice) {
-    return false;
-  }
-
-  const q = query.q?.trim().toLowerCase();
-  if (!q) return true;
-  return [
-    item.name,
-    item.brand,
-    item.model,
-    item.description,
-    item.location,
-    categoryName(item.category),
-    ...item.features,
-  ]
-    .join(" ")
-    .toLowerCase()
-    .includes(q);
-};
-
-const sorters: Record<EquipmentSort, (a: Equipment, b: Equipment) => number> = {
-  newest: (a, b) => b.createdAt.localeCompare(a.createdAt),
-  "price-asc": (a, b) => a.pricePerDay - b.pricePerDay,
-  "price-desc": (a, b) => b.pricePerDay - a.pricePerDay,
-  rating: (a, b) => b.rating - a.rating || b.reviewCount - a.reviewCount,
-};
-
-export async function listEquipment(query: EquipmentQuery = {}): Promise<EquipmentPage> {
-  const page = Math.max(1, query.page ?? 1);
-  const perPage = Math.max(1, query.perPage ?? 9);
-  const sort = query.sort ?? "newest";
-
-  const filtered = equipment
-    .filter((item) => matches(item, query))
-    .sort(sorters[sort]);
-
-  const total = filtered.length;
-  const totalPages = Math.max(1, Math.ceil(total / perPage));
-  const safePage = Math.min(page, totalPages);
-
-  return {
-    items: filtered.slice((safePage - 1) * perPage, safePage * perPage),
-    total,
-    page: safePage,
-    perPage,
-    totalPages,
-    availability: Object.fromEntries(
-      filtered.map((item) => [item.id, isAvailableNow(item)]),
-    ),
+export type EquipmentManagementPage = {
+  items: Equipment[];
+  total: number;
+  page: number;
+  perPage: number;
+  totalPages: number;
+  counts: {
+    all: number;
+    approved: number;
+    pending: number;
+    rejected: number;
   };
-}
+};
+
+export type OwnerEquipmentPage = Pick<
+  EquipmentManagementPage,
+  "items" | "counts"
+>;
 
 export type EquipmentStats = {
   total: number;
@@ -124,39 +66,156 @@ export type EquipmentStats = {
   categories: number;
   cities: number;
   minRate: number;
+  averageRating: number;
+  reviewCount: number;
 };
 
-export async function getEquipmentStats(): Promise<EquipmentStats> {
-  const approved = equipment.filter((item) => item.status === "approved");
-  const rates = approved.map((item) => item.pricePerDay);
+export type EquipmentDetail = {
+  item: Equipment;
+  owner: Owner | null;
+  holds: EquipmentHold[];
+  nextAvailable?: string;
+  today: string;
+  reviews: Review[];
+};
+
+type EquipmentPageResponse = {
+  items: Equipment[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  availability: Record<string, boolean>;
+};
+
+function queryString(query: EquipmentQuery): string {
+  const params = new URLSearchParams();
+
+  if (query.q) params.set("q", query.q);
+  if (query.category && query.category !== "all") {
+    params.set("category", query.category);
+  }
+  if (query.location && query.location !== "all") {
+    params.set("location", query.location);
+  }
+  if (query.rentalType && query.rentalType !== "all") {
+    params.set("rentalType", query.rentalType);
+  }
+  if (query.availability && query.availability !== "all") {
+    params.set("availability", query.availability);
+  }
+  if (typeof query.minPrice === "number") {
+    params.set("minPrice", String(query.minPrice));
+  }
+  if (typeof query.maxPrice === "number") {
+    params.set("maxPrice", String(query.maxPrice));
+  }
+  if (query.sort) params.set("sort", query.sort);
+  if (query.page) params.set("page", String(query.page));
+  if (query.perPage) params.set("limit", String(query.perPage));
+  if (query.ownerId) params.set("ownerId", query.ownerId);
+  if (query.ownerSlug) params.set("ownerSlug", query.ownerSlug);
+  if (query.featured) params.set("featured", "true");
+
+  return params.toString();
+}
+
+export async function listEquipment(
+  query: EquipmentQuery = {},
+): Promise<EquipmentPage> {
+  const search = queryString(query);
+  const data = await apiPublic<EquipmentPageResponse>(
+    `/api/equipment${search ? `?${search}` : ""}`,
+  );
 
   return {
-    total: approved.length,
-    available: approved.filter(isAvailableNow).length,
-    owners: new Set(approved.map((item) => item.ownerId)).size,
-    categories: new Set(approved.map((item) => item.category)).size,
-    cities: new Set(
-      approved.map((item) => item.location.split(",").pop()?.trim()),
-    ).size,
-    minRate: Math.min(...rates),
+    items: data.items,
+    total: data.total,
+    page: data.page,
+    perPage: data.limit,
+    totalPages: data.totalPages,
+    availability: data.availability ?? {},
+  };
+}
+
+/** Owner/admin listing management view, including pending and rejected rows. */
+export async function listMyEquipment(
+  status?: EquipmentStatus,
+): Promise<OwnerEquipmentPage> {
+  const params = status ? `?status=${encodeURIComponent(status)}` : "";
+  return apiFetch<OwnerEquipmentPage>(`/api/equipment/mine${params}`);
+}
+
+/** Admin moderation view across every owner and status. */
+export async function listAllEquipment(
+  query: { status?: EquipmentStatus | "all"; q?: string; page?: number; perPage?: number } = {},
+): Promise<EquipmentManagementPage> {
+  const params = new URLSearchParams();
+  if (query.status && query.status !== "all") {
+    params.set("status", query.status);
+  }
+  if (query.q) params.set("q", query.q);
+  if (query.page) params.set("page", String(query.page));
+  if (query.perPage) params.set("limit", String(query.perPage));
+
+  const search = params.toString();
+  return apiFetch<EquipmentManagementPage>(
+    `/api/admin/equipment${search ? `?${search}` : ""}`,
+  );
+}
+
+export async function getEquipmentStats(): Promise<EquipmentStats> {
+  const stats = await apiPublic<EquipmentStats>("/api/equipment/stats");
+  return {
+    total: stats.total,
+    available: stats.available,
+    owners: stats.owners,
+    categories: stats.categories,
+    cities: stats.cities,
+    minRate: stats.minRate,
+    averageRating: stats.averageRating ?? 0,
+    reviewCount: stats.reviewCount ?? 0,
   };
 }
 
 export async function getFeaturedEquipment(limit = 6): Promise<Equipment[]> {
-  return equipment
-    .filter((item) => item.featured && item.status === "approved")
-    .sort(sorters.rating)
-    .slice(0, limit);
+  const page = await listEquipment({
+    featured: true,
+    sort: "rating",
+    perPage: limit,
+  });
+
+  if (page.items.length > 0) return page.items;
+
+  const fallback = await listEquipment({ sort: "rating", perPage: limit });
+  return fallback.items;
 }
 
-export async function getEquipmentById(id: string): Promise<Equipment | undefined> {
-  return equipment.find((item) => item.id === id);
+export async function getEquipmentDetail(
+  id: string,
+): Promise<EquipmentDetail | undefined> {
+  try {
+    return await apiPublic<EquipmentDetail>(
+      `/api/equipment/${encodeURIComponent(id)}`,
+    );
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return undefined;
+    }
+    throw error;
+  }
+}
+
+export async function getEquipmentById(
+  id: string,
+): Promise<Equipment | undefined> {
+  const detail = await getEquipmentDetail(id);
+  return detail?.item;
 }
 
 export async function getEquipmentByIds(ids: string[]): Promise<Equipment[]> {
-  return ids
-    .map((id) => equipment.find((item) => item.id === id))
-    .filter((item): item is Equipment => Boolean(item));
+  const items = await Promise.all(ids.map((id) => getEquipmentById(id)));
+  return items.filter((item): item is Equipment => Boolean(item));
 }
 
 export async function getRelatedEquipment(
@@ -165,23 +224,17 @@ export async function getRelatedEquipment(
 ): Promise<Equipment[]> {
   const current = await getEquipmentById(id);
   if (!current) return [];
-  return equipment
-    .filter(
-      (item) =>
-        item.id !== id &&
-        item.category === current.category &&
-        item.status === "approved",
-    )
-    .sort(sorters.rating)
-    .slice(0, limit);
+
+  const page = await listEquipment({
+    category: current.category,
+    sort: "rating",
+    perPage: limit + 1,
+  });
+
+  return page.items.filter((item) => item.id !== id).slice(0, limit);
 }
 
 export async function getOwnerEquipment(ownerId: string): Promise<Equipment[]> {
-  return equipment
-    .filter((item) => item.ownerId === ownerId)
-    .sort(sorters.newest);
-}
-
-export async function getEquipmentLocations(): Promise<string[]> {
-  return [...new Set(equipment.map((item) => item.location))].sort();
+  const page = await listEquipment({ ownerId, perPage: 60 });
+  return page.items;
 }

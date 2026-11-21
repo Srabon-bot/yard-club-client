@@ -8,9 +8,20 @@ export type CategoryId =
 
 export type RentalType = "daily" | "weekly" | "monthly";
 export type EquipmentStatus = "approved" | "pending" | "rejected";
-export type BookingStatus = "upcoming" | "active" | "completed" | "cancelled";
-export type PaymentStatus = "paid" | "pending" | "refunded" | "failed";
+export type BookingStatus =
+  | "pending"
+  | "upcoming"
+  | "active"
+  | "completed"
+  | "cancelled";
+export type PaymentStatus =
+  | "unpaid"
+  | "pending"
+  | "paid"
+  | "refunded"
+  | "failed";
 export type UserRole = "customer" | "owner" | "admin";
+export type AccountStatus = "active" | "suspended";
 
 export type Category = {
   id: CategoryId;
@@ -33,6 +44,12 @@ export type Owner = {
   verified: boolean;
   bio: string;
   phone: string;
+  email?: string;
+  image?: string;
+  slug?: string;
+  listingCount?: number;
+  availableCount?: number;
+  minRate?: number;
 };
 
 export type Equipment = {
@@ -58,6 +75,9 @@ export type Equipment = {
   terms: string;
   features: string[];
   featured: boolean;
+  availableNow?: boolean;
+  heldUnits?: number;
+  owner?: Owner | null;
 };
 
 export type Review = {
@@ -69,6 +89,8 @@ export type Review = {
   comment: string;
   equipment: string;
   date: string;
+  equipmentId?: string;
+  equipmentSlug?: string;
 };
 
 export type Favorite = {
@@ -79,9 +101,12 @@ export type Favorite = {
 
 export type Booking = {
   id: string;
+  bookingRef?: string;
   equipmentId: string;
+  equipmentSlug?: string;
   customerId: string;
   ownerId: string;
+  ownerSlug?: string;
   startDate: string;
   endDate: string;
   quantity: number;
@@ -94,6 +119,13 @@ export type Booking = {
   notes: string;
 };
 
+export type EquipmentHold = {
+  startDate: string;
+  endDate: string;
+  quantity?: number;
+  status: string;
+};
+
 export type User = {
   id: string;
   name: string;
@@ -103,7 +135,9 @@ export type User = {
   joined: string;
   phone: string;
   address: string;
-  status: "active" | "suspended";
+  status: AccountStatus;
+  image?: string;
+  bio?: string;
 };
 
 export type MonthPoint = {

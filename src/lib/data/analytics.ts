@@ -1,12 +1,11 @@
-import { analytics } from "@/lib/mock/analytics";
+import { apiFetch } from "@/lib/api.server";
 import type { Analytics } from "@/lib/types";
 
 export async function getAdminAnalytics(): Promise<Analytics> {
-  return analytics;
+  return apiFetch<Analytics>("/api/analytics/admin");
 }
 
-export async function getOwnerAnalytics(): Promise<Analytics> {
-  /* The owner dashboard reads the same month series so the charts share one
-     shape. Once the API lands this becomes an owner-scoped aggregation. */
-  return analytics;
+export async function getOwnerAnalytics(ownerId?: string): Promise<Analytics> {
+  const params = ownerId ? `?ownerId=${encodeURIComponent(ownerId)}` : "";
+  return apiFetch<Analytics>(`/api/analytics/owner${params}`);
 }

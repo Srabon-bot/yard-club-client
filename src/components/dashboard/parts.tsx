@@ -312,6 +312,7 @@ export function TablePager({
 }
 
 export const BOOKING_TONE: Record<BookingStatus, StatusTone> = {
+  pending: "amber",
   active: "green",
   upcoming: "blue",
   completed: "neutral",
@@ -319,6 +320,7 @@ export const BOOKING_TONE: Record<BookingStatus, StatusTone> = {
 };
 
 export const PAYMENT_TONE: Record<PaymentStatus, StatusTone> = {
+  unpaid: "neutral",
   paid: "green",
   pending: "amber",
   refunded: "blue",

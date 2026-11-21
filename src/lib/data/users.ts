@@ -1,4 +1,4 @@
-import { users } from "@/lib/mock/users";
+import { apiFetch } from "@/lib/api.server";
 import type { User, UserRole } from "@/lib/types";
 
 export type UserQuery = {
@@ -15,36 +15,30 @@ export type UserPage = {
   page: number;
   perPage: number;
   totalPages: number;
+  counts: {
+    all: number;
+    customer: number;
+    owner: number;
+    admin: number;
+    suspended: number;
+  };
 };
 
 export async function listUsers(query: UserQuery = {}): Promise<UserPage> {
-  const page = Math.max(1, query.page ?? 1);
-  const perPage = Math.max(1, query.perPage ?? 8);
-  const q = query.q?.trim().toLowerCase();
+  const params = new URLSearchParams();
+  if (query.q) params.set("q", query.q);
+  if (query.role && query.role !== "all") params.set("role", query.role);
+  if (query.status && query.status !== "all") {
+    params.set("status", query.status);
+  }
+  if (query.page) params.set("page", String(query.page));
+  if (query.perPage) params.set("limit", String(query.perPage));
 
-  const filtered = users.filter((user) => {
-    if (query.role && query.role !== "all" && user.role !== query.role) return false;
-    if (query.status && query.status !== "all" && user.status !== query.status) return false;
-    if (!q) return true;
-    return [user.name, user.email, user.phone, user.address]
-      .join(" ")
-      .toLowerCase()
-      .includes(q);
-  });
-
-  const total = filtered.length;
-  const totalPages = Math.max(1, Math.ceil(total / perPage));
-  const safePage = Math.min(page, totalPages);
-
-  return {
-    items: filtered.slice((safePage - 1) * perPage, safePage * perPage),
-    total,
-    page: safePage,
-    perPage,
-    totalPages,
-  };
+  const search = params.toString();
+  return apiFetch<UserPage>(`/api/admin/users${search ? `?${search}` : ""}`);
 }
 
-export async function getUser(id: string): Promise<User | undefined> {
-  return users.find((user) => user.id === id);
+export async function getProfile(): Promise<User> {
+  const data = await apiFetch<{ user: User }>("/api/profile");
+  return data.user;
 }

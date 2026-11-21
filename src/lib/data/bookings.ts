@@ -1,132 +1,200 @@
-import { bookings } from "@/lib/mock/bookings";
-import { equipment } from "@/lib/mock/equipment";
-import { users } from "@/lib/mock/users";
-import type { Booking, BookingStatus, Equipment, User } from "@/lib/types";
+import { apiFetch } from "@/lib/api.server";
+import { getEquipmentDetail } from "@/lib/data/equipment";
+import type {
+  Booking,
+  BookingStatus,
+  Equipment,
+  EquipmentHold,
+  User,
+} from "@/lib/types";
 
-export type BookingRow = Booking & {
-  equipment: Equipment | undefined;
-  customer: User | undefined;
-  owner: User | undefined;
+export type BookingRow = Omit<Booking, "equipmentId" | "customerId" | "ownerId"> & {
+  equipmentId: string;
+  customerId: string;
+  ownerId: string;
+  equipment: Equipment | null;
+  customer: User | null;
+  owner: User | null;
 };
 
 export type BookingQuery = {
-  customerId?: string;
-  ownerId?: string;
   status?: BookingStatus | "all";
   q?: string;
+  page?: number;
+  perPage?: number;
 };
 
-export type BookingStats = {
-  total: number;
+export type BookingCounts = {
+  all: number;
+  pending: number;
   upcoming: number;
   active: number;
   completed: number;
   cancelled: number;
+};
+
+export type BookingStats = BookingCounts & {
   revenue: number;
 };
 
-const byNewest = (a: Booking, b: Booking) => b.createdAt.localeCompare(a.createdAt);
-
-export async function listBookings(query: BookingQuery = {}): Promise<BookingRow[]> {
-  const q = query.q?.trim().toLowerCase();
-
-  return bookings
-    .filter((booking) => {
-      if (query.customerId && booking.customerId !== query.customerId) return false;
-      if (query.ownerId && booking.ownerId !== query.ownerId) return false;
-      if (query.status && query.status !== "all" && booking.bookingStatus !== query.status) {
-        return false;
-      }
-      if (!q) return true;
-      const item = equipment.find((entry) => entry.id === booking.equipmentId);
-      return [booking.id, booking.address, booking.notes, item?.name ?? ""]
-        .join(" ")
-        .toLowerCase()
-        .includes(q);
-    })
-    .sort(byNewest)
-    .map((booking) => ({
-      ...booking,
-      equipment: equipment.find((entry) => entry.id === booking.equipmentId),
-      customer: users.find((user) => user.id === booking.customerId),
-      owner: users.find((user) => user.id === booking.ownerId),
-    }));
-}
-
-/* Earliest open day after the last hold on an item. Used by the home hero
-   card and the availability calendar; a real API layer will read the same
-   shape from the bookings collection. */
-export async function getNextAvailableDate(
-  equipmentId: string,
-): Promise<string | undefined> {
-  const holds = bookings
-    .filter(
-      (booking) =>
-        booking.equipmentId === equipmentId &&
-        booking.bookingStatus !== "cancelled" &&
-        booking.bookingStatus !== "completed",
-    )
-    .map((booking) => booking.endDate)
-    .sort();
-
-  if (holds.length === 0) return undefined;
-
-  const next = new Date(`${holds[holds.length - 1]}T00:00:00Z`);
-  next.setUTCDate(next.getUTCDate() + 1);
-  return next.toISOString().slice(0, 10);
-}
-
-export type EquipmentHold = {
-  startDate: string;
-  endDate: string;
-  quantity: number;
-  status: BookingStatus;
+export type BookingPage = {
+  items: BookingRow[];
+  counts: BookingCounts;
+  total: number;
+  page: number;
+  perPage: number;
+  totalPages: number;
 };
 
-export async function getEquipmentHolds(
-  equipmentId: string,
-): Promise<EquipmentHold[]> {
-  return bookings
-    .filter((booking) => booking.equipmentId === equipmentId)
-    .map((booking) => ({
-      startDate: booking.startDate,
-      endDate: booking.endDate,
-      quantity: booking.quantity,
-      status: booking.bookingStatus,
-    }));
+type BookingListResponse = BookingPage;
+type CustomerBookingResponse = { items: BookingRow[]; counts: BookingCounts };
+
+function statusParam(status: BookingQuery["status"]): string | undefined {
+  return status && status !== "all" ? status : undefined;
 }
 
-export async function getBooking(id: string): Promise<BookingRow | undefined> {
-  const booking = bookings.find((entry) => entry.id === id);
-  if (!booking) return undefined;
+function pageQuery(query: BookingQuery): string {
+  const params = new URLSearchParams();
+  const status = statusParam(query.status);
+  if (status) params.set("status", status);
+  if (query.q) params.set("q", query.q);
+  if (query.page) params.set("page", String(query.page));
+  if (query.perPage) params.set("limit", String(query.perPage));
+  return params.toString();
+}
+
+export async function listBookings(
+  query: BookingQuery = {},
+): Promise<BookingRow[]> {
+  const page = await listBookingsPage({ ...query, perPage: query.perPage ?? 100 });
+  return page.items;
+}
+
+export async function listBookingsPage(
+  query: BookingQuery = {},
+): Promise<BookingPage> {
+  const search = pageQuery(query);
+  return apiFetch<BookingListResponse>(
+    `/api/bookings${search ? `?${search}` : ""}`,
+  );
+}
+
+export async function getCustomerBookings(): Promise<BookingRow[]> {
+  const data = await apiFetch<CustomerBookingResponse>("/api/bookings/mine");
+  return data.items;
+}
+
+export async function getCustomerBookingStats(): Promise<BookingStats> {
+  const rows = await getCustomerBookings();
+  const counts = countsFor(rows);
+  const revenue = rows
+    .filter(
+      (row) =>
+        row.paymentStatus === "paid" && row.bookingStatus !== "cancelled",
+    )
+    .reduce((sum, row) => sum + row.total, 0);
+
+  return { ...counts, revenue };
+}
+
+export async function getCustomerBookingPage(
+  query: BookingQuery = {},
+): Promise<{ items: BookingRow[]; counts: BookingCounts }> {
+  const rows = await getCustomerBookings();
+  const status = statusParam(query.status);
+  const q = query.q?.trim().toLowerCase();
+
+  const filtered = rows.filter((row) => {
+    if (status && row.bookingStatus !== status) return false;
+    if (!q) return true;
+    return [
+      row.bookingRef ?? row.id,
+      row.address,
+      row.notes,
+      row.equipment?.name ?? "",
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(q);
+  });
+
   return {
-    ...booking,
-    equipment: equipment.find((entry) => entry.id === booking.equipmentId),
-    customer: users.find((user) => user.id === booking.customerId),
-    owner: users.find((user) => user.id === booking.ownerId),
+    items: filtered,
+    counts: countsFor(rows),
   };
 }
 
-export async function getBookingStats(query: BookingQuery = {}): Promise<BookingStats> {
-  const rows = await listBookings(query);
-  const revenue = rows
-    .filter((row) => row.paymentStatus === "paid")
-    .reduce((sum, row) => sum + row.total, 0);
+export async function getOwnerBookings(): Promise<BookingRow[]> {
+  return listBookings({ perPage: 100 });
+}
 
+export async function getOwnerBookingPage(
+  query: BookingQuery = {},
+): Promise<BookingPage> {
+  return listBookingsPage({ ...query, perPage: query.perPage ?? 100 });
+}
+
+export function countsFor(rows: BookingRow[]): BookingCounts {
   return {
-    total: rows.length,
+    all: rows.length,
+    pending: rows.filter((row) => row.bookingStatus === "pending").length,
     upcoming: rows.filter((row) => row.bookingStatus === "upcoming").length,
     active: rows.filter((row) => row.bookingStatus === "active").length,
     completed: rows.filter((row) => row.bookingStatus === "completed").length,
     cancelled: rows.filter((row) => row.bookingStatus === "cancelled").length,
-    revenue,
   };
 }
 
-export async function getOwnerBookings(ownerId: string): Promise<BookingRow[]> {
-  return listBookings({ ownerId });
+export async function getBookingStats(
+  query: BookingQuery = {},
+): Promise<BookingStats> {
+  const rows = await listBookings({ ...query, perPage: 100 });
+  const counts = countsFor(rows);
+  const revenue = rows
+    .filter(
+      (row) =>
+        row.paymentStatus === "paid" && row.bookingStatus !== "cancelled",
+    )
+    .reduce((sum, row) => sum + row.total, 0);
+
+  return { ...counts, revenue };
 }
 
-export async function getCustomerBookings(customerId: string): Promise<BookingRow[]> {
-  return listBookings({ customerId });
+/** Last `months` buckets of paid booking value, oldest first. */
+export function bookingSpendSeries(
+  rows: BookingRow[],
+  months = 6,
+): number[] {
+  const now = new Date();
+  const buckets = Array.from({ length: months }, (_, index) => {
+    const date = new Date(now.getFullYear(), now.getMonth() - (months - 1 - index), 1);
+    return {
+      key: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`,
+      value: 0,
+    };
+  });
+
+  for (const row of rows) {
+    if (row.paymentStatus !== "paid" || row.bookingStatus === "cancelled") continue;
+    const date = new Date(row.createdAt);
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    const bucket = buckets.find((entry) => entry.key === key);
+    if (bucket) bucket.value += row.total;
+  }
+
+  return buckets.map((bucket) => bucket.value);
+}
+
+export async function getNextAvailableDate(
+  equipmentId: string,
+): Promise<string | undefined> {
+  const detail = await getEquipmentDetail(equipmentId);
+  return detail?.nextAvailable;
+}
+
+export async function getEquipmentHolds(
+  equipmentId: string,
+): Promise<EquipmentHold[]> {
+  const detail = await getEquipmentDetail(equipmentId);
+  return detail?.holds ?? [];
 }

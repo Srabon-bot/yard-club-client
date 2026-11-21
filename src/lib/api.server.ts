@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import type { UserRole } from "@/lib/types";
 
@@ -45,6 +46,24 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   };
 }
 
+/** Server-side route guard used by the three dashboard areas. */
+export async function requireRole(
+  roles: UserRole | UserRole[],
+  next: string,
+): Promise<SessionUser> {
+  const user = await getSessionUser();
+  if (!user) {
+    redirect(`/login?next=${encodeURIComponent(next)}`);
+  }
+
+  const allowed = Array.isArray(roles) ? roles : [roles];
+  if (!allowed.includes(user.role)) {
+    redirect(`/${user.role === "customer" ? "dashboard" : user.role}`);
+  }
+
+  return user;
+}
+
 export async function apiFetch<T>(
   path: string,
   init: RequestInit = {},
@@ -53,7 +72,18 @@ export async function apiFetch<T>(
   if (!user) {
     throw new ApiError("Sign in to continue.", 401);
   }
+  return apiFetchAs<T>(user.id, path, init);
+}
 
+/**
+ * Calls the same API with an explicit user id. The internal key still proves
+ * the request came from the Next.js server.
+ */
+export async function apiFetchAs<T>(
+  userId: string,
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
   if (!API_INTERNAL_KEY) {
     throw new ApiError(
       "API_INTERNAL_KEY is missing from the client environment.",
@@ -61,17 +91,41 @@ export async function apiFetch<T>(
     );
   }
 
+  return request<T>(path, {
+    ...init,
+    headers: {
+      "content-type": "application/json",
+      ...init.headers,
+      "x-internal-key": API_INTERNAL_KEY,
+      "x-user-id": userId,
+    },
+  });
+}
+
+/**
+ * Public catalogue reads. No session or internal key is needed, and the
+ * response is never cached at build time because the Express API may be down.
+ */
+export async function apiPublic<T>(
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
+  return request<T>(path, {
+    ...init,
+    headers: {
+      ...(init.body ? { "content-type": "application/json" } : {}),
+      ...init.headers,
+    },
+  });
+}
+
+async function request<T>(path: string, init: RequestInit): Promise<T> {
   let response: Response;
   try {
     response = await fetch(`${API_URL}${path}`, {
       ...init,
       cache: "no-store",
-      headers: {
-        "content-type": "application/json",
-        ...init.headers,
-        "x-internal-key": API_INTERNAL_KEY,
-        "x-user-id": user.id,
-      },
+      next: { revalidate: 0 },
     });
   } catch {
     throw new ApiError(
