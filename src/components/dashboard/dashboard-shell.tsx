@@ -151,7 +151,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <div className="mt-3 border-t-2 border-ink pt-3">
               <p className="flex items-start gap-2 px-1.5 font-mono text-[9px] leading-relaxed uppercase tracking-[0.1em] text-ink-soft">
                 <i className="mt-1 size-1.5 shrink-0 rounded-full bg-lime" aria-hidden="true" />
-                Equipment is live. Bookings are sample data.
+                Equipment, bookings and availability are live.
               </p>
             </div>
           </div>

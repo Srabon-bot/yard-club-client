@@ -24,7 +24,7 @@ export default function LoginPage() {
       </div>
 
       <p className="mt-6 border-t border-ink/15 pt-4 font-mono text-[9px] leading-relaxed uppercase tracking-[0.06em] text-ink-soft">
-        Protected by Stripe for payments · handover checklist on every rental
+        Owner-confirmed requests · handover checklist on every rental
       </p>
     </div>
   );

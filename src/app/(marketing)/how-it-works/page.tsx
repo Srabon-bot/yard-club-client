@@ -33,9 +33,9 @@ const STEPS = [
   },
   {
     step: "03",
-    title: "Secure instant booking & payment",
+    title: "Send a rental request",
     icon: FileCheck2,
-    desc: "Specify rental dates, required units, and site address. Transparent pricing in BDT with no surprise surcharges. Complete payments securely via integrated Stripe Checkout.",
+    desc: "Specify rental dates, required units, and site address. Transparent pricing in BDT with no surprise surcharges. The owner confirms the dates before payment is enabled.",
   },
   {
     step: "04",
@@ -194,7 +194,7 @@ export default function HowItWorksPage() {
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle className="size-4 text-lime" />
-                  Secure checkout and itemized printable receipts
+                  A dated request with the full rental breakdown
                 </li>
               </ul>
               <div className="mt-6">

@@ -28,12 +28,12 @@ const FAQS = [
     category: "Payments & Deposits",
     questions: [
       {
-        q: "What payment methods are supported?",
-        a: "We accept all major credit and debit cards securely through Stripe Checkout. Prices are settled cleanly in Bangladeshi Taka (BDT).",
+        q: "When do I pay for a rental?",
+        a: "You send a dated request first; no card is charged at that stage. The owner confirms availability, then payment instructions and the final total are attached to the booking. All quotes are in Bangladeshi Taka (BDT).",
       },
       {
         q: "Are security deposits required?",
-        a: "High-value machinery may include an escrow authorization hold. The hold releases within 48 hours of return inspection verification.",
+        a: "High-value machinery may require a refundable deposit agreed with the owner at handover. The deposit amount and return conditions stay with the booking record.",
       },
       {
         q: "Can I get an itemized printable receipt?",
