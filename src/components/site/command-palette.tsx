@@ -8,6 +8,7 @@ import {
   Home,
   Layers,
   LayoutDashboard,
+  Search,
   Settings,
   Truck,
   User,
@@ -22,9 +23,12 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
+import type { Equipment } from "@/lib/types";
 
 export function CommandPalette() {
   const [open, setOpen] = React.useState(false);
+  const [equipment, setEquipment] = React.useState<Equipment[]>([]);
+  const [loaded, setLoaded] = React.useState(false);
   const router = useRouter();
 
   React.useEffect(() => {
@@ -47,6 +51,32 @@ export function CommandPalette() {
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
   }, []);
+
+  React.useEffect(() => {
+    if (!open || loaded) return;
+
+    const controller = new AbortController();
+    const load = async () => {
+      try {
+        const response = await fetch("/api/equipment?limit=8", {
+          signal: controller.signal,
+        });
+        if (!response.ok) return;
+
+        const data = (await response.json()) as { items?: Equipment[] };
+        if (!controller.signal.aborted) {
+          setEquipment(Array.isArray(data.items) ? data.items : []);
+        }
+      } catch {
+        /* Navigation commands still work when the catalogue is unavailable. */
+      } finally {
+        if (!controller.signal.aborted) setLoaded(true);
+      }
+    };
+
+    void load();
+    return () => controller.abort();
+  }, [open, loaded]);
 
   const runCommand = React.useCallback((command: () => unknown) => {
     setOpen(false);
@@ -97,6 +127,29 @@ export function CommandPalette() {
               <span>Contact Us</span>
             </CommandItem>
           </CommandGroup>
+          {equipment.length > 0 ? (
+            <>
+              <CommandSeparator />
+              <CommandGroup heading="Equipment Quick Jump">
+                {equipment.map((item) => (
+                  <CommandItem
+                    key={item.id}
+                    onSelect={() =>
+                      runCommand(() =>
+                        router.push(`/equipment/${item.slug ?? item.id}`),
+                      )
+                    }
+                  >
+                    <Search className="mr-2 size-4 text-lime" />
+                    <span>{item.name}</span>
+                    <span className="ml-auto font-mono text-[10px] text-ink-soft">
+                      {item.location}
+                    </span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </>
+          ) : null}
           <CommandSeparator />
           <CommandGroup heading="Dashboards">
             <CommandItem

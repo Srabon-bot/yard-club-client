@@ -94,6 +94,7 @@ Private routes use `requireRole(roles, next)` from `src/lib/api.server.ts`. Sign
 ## How live data works
 
 - `src/lib/api.server.ts` reads the Better Auth session and calls the Express API with `x-internal-key` and `x-user-id`. `apiPublic` is used where no session is required.
+- `GET /api/equipment` is a same-origin route handler that proxies the public Express catalogue for the command palette. It requests featured, top-rated listings and returns an empty list with HTTP 503 when the API is unreachable, so the browser never needs `API_URL` and the palette still works offline.
 - `src/lib/data/*` contains server-only queries for equipment, bookings, users, favorites, owners, reviews, categories, and analytics.
 - `src/lib/actions/*` contains server actions for creating bookings and listings, updating profiles, saving favorites, managing bookings, and admin moderation.
 - Booking totals are `pricePerDay × quantity × daysBetween(start, end)`. New requests are saved as `bookingStatus: "pending"` and `paymentStatus: "unpaid"`. Pending, upcoming, and active bookings reserve stock so overlapping requests cannot be accepted.
