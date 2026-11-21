@@ -75,7 +75,8 @@ Open [http://localhost:3000](http://localhost:3000). The Express API must also b
 | --- | --- |
 | `/owner` | Fleet analytics, earnings, bookings, and recent listings. |
 | `/owner/add-equipment` | Create a listing; it starts as `pending`. |
-| `/owner/equipment` | Filter owned listings by approval status and delete unused ones. |
+| `/owner/equipment` | Filter owned listings by approval status, edit details, and delete unused ones. |
+| `/owner/equipment/[id]/edit` | Edit an owned listing, including pending and rejected rows. |
 | `/owner/rentals` | Confirm, start, complete, or decline rental requests for owned equipment. |
 | `/owner/profile` | Update owner details shown on the public profile. |
 
@@ -85,7 +86,8 @@ Open [http://localhost:3000](http://localhost:3000). The Express API must also b
 | --- | --- |
 | `/admin` | Platform-wide analytics, pending approvals, and recent activity. |
 | `/admin/users` | Search users and change role or account status. |
-| `/admin/equipment` | Approve, reject, unlist, feature, or delete any listing. |
+| `/admin/equipment` | Approve, reject, unlist, feature, edit, or delete any listing. |
+| `/admin/equipment/[id]/edit` | Edit any listing regardless of owner or approval status. |
 | `/admin/rentals` | Manage every booking and its payment status. |
 | `/admin/profile` | Update the admin account. |
 

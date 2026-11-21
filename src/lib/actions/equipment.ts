@@ -11,24 +11,13 @@ export type DeleteEquipmentResult =
   | { ok: true; id: string; name: string }
   | { ok: false; error: string };
 
+export type UpdateEquipmentResult = DeleteEquipmentResult;
+
 const value = (formData: FormData, key: string) =>
   String(formData.get(key) ?? "").trim();
 
-export async function createEquipmentAction(
-  formData: FormData,
-): Promise<CreateEquipmentResult> {
-  const user = await getSessionUser();
-  if (!user) {
-    return { ok: false, error: "Sign in as an owner to add equipment." };
-  }
-  if (user.role === "customer") {
-    return {
-      ok: false,
-      error: "Only owner and admin accounts can create listings.",
-    };
-  }
-
-  const payload = {
+function equipmentPayload(formData: FormData) {
+  return {
     name: value(formData, "name"),
     brand: value(formData, "brand"),
     model: value(formData, "model"),
@@ -44,6 +33,23 @@ export async function createEquipmentAction(
       .getAll("rentalTypes")
       .map((entry) => String(entry)),
   };
+}
+
+export async function createEquipmentAction(
+  formData: FormData,
+): Promise<CreateEquipmentResult> {
+  const user = await getSessionUser();
+  if (!user) {
+    return { ok: false, error: "Sign in as an owner to add equipment." };
+  }
+  if (user.role === "customer") {
+    return {
+      ok: false,
+      error: "Only owner and admin accounts can create listings.",
+    };
+  }
+
+  const payload = equipmentPayload(formData);
 
   try {
     const result = await apiFetch<{ item: { id: string; name: string } }>(
@@ -64,6 +70,43 @@ export async function createEquipmentAction(
     }
     console.error("Create equipment action failed:", error);
     return { ok: false, error: "Could not save the listing. Try again." };
+  }
+}
+
+export async function updateEquipmentAction(
+  formData: FormData,
+): Promise<UpdateEquipmentResult> {
+  const id = value(formData, "id");
+  if (!id) {
+    return { ok: false, error: "That listing is missing its id." };
+  }
+
+  const user = await getSessionUser();
+  if (!user || (user.role !== "owner" && user.role !== "admin")) {
+    return { ok: false, error: "Sign in as an owner or admin to edit listings." };
+  }
+
+  const payload = equipmentPayload(formData);
+  if (payload.rentalTypes.length === 0) {
+    return { ok: false, error: "Choose at least one rental type." };
+  }
+
+  try {
+    await apiFetch<{ item: { id: string; name: string } }>(
+      `/api/equipment/${encodeURIComponent(id)}`,
+      { method: "PATCH", body: JSON.stringify(payload) },
+    );
+
+    revalidatePath("/owner/equipment");
+    revalidatePath("/admin/equipment");
+    revalidatePath("/equipment");
+    revalidatePath(`/equipment/${id}`);
+
+    return { ok: true, id, name: payload.name };
+  } catch (error) {
+    if (error instanceof ApiError) return { ok: false, error: error.message };
+    console.error("Update equipment action failed:", error);
+    return { ok: false, error: "Could not update the listing. Try again." };
   }
 }
 

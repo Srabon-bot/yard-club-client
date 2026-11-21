@@ -1,8 +1,9 @@
 "use client";
 
 import { useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { moderateEquipmentAction } from "@/lib/actions/admin";
@@ -50,6 +51,12 @@ export function EquipmentModerationActions({
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
+      <Button asChild size="sm" variant="outline">
+        <Link href={`/admin/equipment/${id}/edit`} aria-label={`Edit ${name}`}>
+          <Pencil className="size-3.5" aria-hidden="true" />
+          Edit
+        </Link>
+      </Button>
       <Button
         size="sm"
         disabled={pending || status === "approved"}

@@ -1,4 +1,4 @@
-import { ApiError, apiFetch, apiPublic } from "@/lib/api.server";
+import { ApiError, apiFetch, apiPublic, getSessionUser } from "@/lib/api.server";
 import { isAvailableNow } from "@/lib/equipment";
 import type {
   CategoryId,
@@ -162,6 +162,23 @@ export async function listAllEquipment(
   return apiFetch<EquipmentManagementPage>(
     `/api/admin/equipment${search ? `?${search}` : ""}`,
   );
+}
+
+/** Owner/admin form data, including pending and rejected listings. */
+export async function getEditableEquipment(
+  id: string,
+): Promise<Equipment | undefined> {
+  const user = await getSessionUser();
+  if (!user || (user.role !== "owner" && user.role !== "admin")) {
+    return undefined;
+  }
+
+  const page =
+    user.role === "admin"
+      ? await listAllEquipment({ perPage: 100 })
+      : await listMyEquipment();
+
+  return page.items.find((item) => item.id === id);
 }
 
 export async function getEquipmentStats(): Promise<EquipmentStats> {

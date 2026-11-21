@@ -114,13 +114,13 @@ export function OwnerEquipmentTable({ items }: { items: OwnerEquipment[] }) {
                 <Button asChild size="sm" variant="outline">
                   <Link href={`/equipment/${item.slug ?? item.id}`}>View</Link>
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => toast.info("Edit coming soon")}
-                  aria-label={`Edit ${item.name}`}
-                >
-                  <Pencil className="size-3.5" aria-hidden="true" />
+                <Button asChild size="sm" variant="outline">
+                  <Link
+                    href={`/owner/equipment/${item.id}/edit`}
+                    aria-label={`Edit ${item.name}`}
+                  >
+                    <Pencil className="size-3.5" aria-hidden="true" />
+                  </Link>
                 </Button>
                 <Button
                   size="sm"
