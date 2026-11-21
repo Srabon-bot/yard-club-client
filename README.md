@@ -4,6 +4,15 @@
 
 **Live URL:** add the deployed URL here after deployment.
 
+### Demo admin
+
+For assignment review, a permanent admin account is available:
+
+- Email: `admin@yardclub.test`
+- Password: `Admin@123`
+
+It was created through the normal Better Auth email/password flow with the `admin` role. Replace or remove it before any non-demo deployment.
+
 ## Stack
 
 - Next.js 16 App Router, React 19, TypeScript
