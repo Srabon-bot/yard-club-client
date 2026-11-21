@@ -13,9 +13,12 @@ import { StatusBadge } from "@/components/site/status-badge";
 import { Button } from "@/components/ui/button";
 import { listUsers } from "@/lib/data/users";
 import { formatDate } from "@/lib/format";
+import { oneOf, positiveInt } from "@/lib/search-params";
 import type { UserRole } from "@/lib/types";
 
 export const metadata: Metadata = { title: "All users" };
+
+const ROLES = ["all", "customer", "owner", "admin"] as const;
 
 const ROLE_TONE: Record<UserRole, "green" | "blue" | "amber"> = {
   customer: "green",
@@ -33,8 +36,8 @@ async function UsersContent({
   const sp = await searchParams;
   const q = typeof sp.q === "string" ? sp.q : "";
   const rawRole = typeof sp.role === "string" ? sp.role : "all";
-  const role = rawRole as UserRole | "all";
-  const page = Math.max(1, Number(sp.page ?? "1"));
+  const role = oneOf(rawRole, ROLES, "all");
+  const page = positiveInt(sp.page);
 
   const result = await listUsers({ q, role, page, perPage: PER_PAGE });
 

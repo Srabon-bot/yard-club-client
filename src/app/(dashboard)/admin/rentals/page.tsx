@@ -13,11 +13,12 @@ import {
 } from "@/components/dashboard/parts";
 import { getBookingStats, listBookings } from "@/lib/data/bookings";
 import { formatBDT, formatShortDate } from "@/lib/format";
-import type { BookingStatus } from "@/lib/types";
+import { oneOf, positiveInt } from "@/lib/search-params";
 
 export const metadata: Metadata = { title: "All rentals" };
 
 const PER_PAGE = 10;
+const STATUSES = ["all", "upcoming", "active", "completed", "cancelled"] as const;
 
 async function RentalsContent({
   searchParams,
@@ -26,8 +27,8 @@ async function RentalsContent({
 }) {
   const sp = await searchParams;
   const rawStatus = typeof sp.status === "string" ? sp.status : "all";
-  const status = rawStatus as BookingStatus | "all";
-  const page = Math.max(1, Number(sp.page ?? "1"));
+  const status = oneOf(rawStatus, STATUSES, "all");
+  const page = positiveInt(sp.page);
 
   const [allBookings, stats] = await Promise.all([
     listBookings(),

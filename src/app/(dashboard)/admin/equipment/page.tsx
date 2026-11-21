@@ -2,7 +2,6 @@
 
 import { Suspense } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { Package } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
@@ -15,9 +14,12 @@ import {
 } from "@/components/dashboard/parts";
 import { Button } from "@/components/ui/button";
 import { formatBDT } from "@/lib/format";
+import { bypassImageOptimization } from "@/lib/images";
 import { equipment as allEquipment } from "@/lib/mock/equipment";
-import type { EquipmentStatus } from "@/lib/types";
+import { oneOf } from "@/lib/search-params";
 import { useSearchParams } from "next/navigation";
+
+const STATUSES = ["all", "approved", "pending", "rejected"] as const;
 
 const counts = {
   all: allEquipment.length,
@@ -29,7 +31,7 @@ const counts = {
 function AdminEquipmentContent() {
   const sp = useSearchParams();
   const rawStatus = sp.get("status") ?? "all";
-  const status = rawStatus as EquipmentStatus | "all";
+  const status = oneOf(rawStatus, STATUSES, "all");
 
   const rows =
     status === "all"
@@ -86,6 +88,7 @@ function AdminEquipmentContent() {
                       src={e.image}
                       alt={e.name}
                       fill
+                      unoptimized={bypassImageOptimization(e.image)}
                       className="object-cover"
                       sizes="40px"
                     />

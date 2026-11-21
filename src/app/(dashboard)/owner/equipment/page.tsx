@@ -14,7 +14,7 @@ import {
 } from "@/components/dashboard/owner-equipment-table";
 import { Button } from "@/components/ui/button";
 import { ApiError, apiFetch } from "@/lib/api.server";
-import type { EquipmentStatus } from "@/lib/types";
+import { oneOf } from "@/lib/search-params";
 
 export const metadata: Metadata = { title: "My equipment" };
 
@@ -28,12 +28,7 @@ type OwnerEquipmentResponse = {
   };
 };
 
-const STATUSES: (EquipmentStatus | "all")[] = [
-  "all",
-  "approved",
-  "pending",
-  "rejected",
-];
+const STATUSES = ["all", "approved", "pending", "rejected"] as const;
 
 async function OwnerEquipmentContent({
   searchParams,
@@ -42,9 +37,7 @@ async function OwnerEquipmentContent({
 }) {
   const sp = await searchParams;
   const raw = typeof sp.status === "string" ? sp.status : "all";
-  const status = STATUSES.includes(raw as EquipmentStatus | "all")
-    ? (raw as EquipmentStatus | "all")
-    : "all";
+  const status = oneOf(raw, STATUSES, "all");
 
   let data: OwnerEquipmentResponse;
   try {
