@@ -26,7 +26,6 @@ import { listBookings } from "@/lib/data/bookings";
 import { formatBDT, formatCompactBDT, formatShortDate } from "@/lib/format";
 import { analytics } from "@/lib/mock/analytics";
 import { equipment as allEquipment } from "@/lib/mock/equipment";
-import { users } from "@/lib/mock/users";
 
 export const metadata: Metadata = { title: "Admin overview" };
 
@@ -103,7 +102,6 @@ export default async function AdminOverviewPage() {
           ) : (
             <ul className="grid gap-2">
               {pendingEquipment.map((e) => {
-                const owner = users.find((u) => u.id === e.ownerId || u.email.includes(e.ownerId));
                 return (
                   <li
                     key={e.id}

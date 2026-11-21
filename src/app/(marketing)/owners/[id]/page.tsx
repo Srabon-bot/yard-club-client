@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   CalendarDays,
   Clock,
   MapPin,
-  MessageSquare,
   Phone,
   ShieldCheck,
   Star,

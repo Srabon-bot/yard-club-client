@@ -5,7 +5,6 @@ import {
   Clock,
   Mail,
   MapPin,
-  Phone,
   Send,
   ShieldAlert,
 } from "lucide-react";

@@ -3,9 +3,6 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import {
-  Calculator,
-  Calendar,
-  CreditCard,
   FileText,
   HelpCircle,
   Home,

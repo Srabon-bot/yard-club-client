@@ -18,7 +18,6 @@ import {
 } from "@/components/dashboard/parts";
 import { Button } from "@/components/ui/button";
 import { getBookingStats, getCustomerBookings } from "@/lib/data/bookings";
-import { getEquipmentById } from "@/lib/data/equipment";
 import { formatBDT, formatShortDate } from "@/lib/format";
 import { analytics } from "@/lib/mock/analytics";
 
