@@ -64,7 +64,11 @@ function Axis() {
 export function RevenueChart({ months }: { months: Analytics["months"] }) {
   return (
     <div className="h-[228px] w-full" aria-hidden="true">
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer
+        width="100%"
+        height="100%"
+        initialDimension={{ width: 600, height: 228 }}
+      >
         <BarChart data={months} margin={{ top: 8, right: 2, bottom: 0, left: -14 }}>
           <CartesianGrid
             vertical={false}
@@ -103,7 +107,11 @@ export function RevenueChart({ months }: { months: Analytics["months"] }) {
 export function BookingsChart({ months }: { months: Analytics["months"] }) {
   return (
     <div className="h-[228px] w-full" aria-hidden="true">
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer
+        width="100%"
+        height="100%"
+        initialDimension={{ width: 600, height: 228 }}
+      >
         <LineChart data={months} margin={{ top: 10, right: 6, bottom: 0, left: -22 }}>
           <CartesianGrid
             vertical={false}
@@ -142,7 +150,11 @@ export function CategoryDonut({
   return (
     <div className="grid gap-4 sm:grid-cols-[160px_1fr] sm:items-center">
       <div className="relative mx-auto h-[160px] w-[160px]" aria-hidden="true">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          initialDimension={{ width: 160, height: 160 }}
+        >
           <PieChart>
             <Pie
               data={data}
@@ -208,7 +220,11 @@ export function MiniSparkline({ values }: { values: number[] }) {
   const data = values.map((value, index) => ({ index, value }));
   return (
     <div className="h-10 w-full" aria-hidden="true">
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer
+        width="100%"
+        height="100%"
+        initialDimension={{ width: 320, height: 40 }}
+      >
         <LineChart data={data}>
           <Line
             type="monotone"
