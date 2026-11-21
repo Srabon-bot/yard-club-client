@@ -4,14 +4,77 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
+  useSyncExternalStore,
 } from "react";
 import { toast } from "sonner";
+import { useHydrated } from "@/lib/use-hydrated";
 
 const STORAGE_KEY = "yardclub-compare";
 const MAX_ITEMS = 3;
+const EMPTY: string[] = [];
+
+let cachedRaw: string | null | undefined;
+let cachedIds: string[] = EMPTY;
+const listeners = new Set<() => void>();
+
+function readIds(): string[] {
+  let raw: string | null;
+  try {
+    raw = window.localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return EMPTY;
+  }
+
+  if (raw === cachedRaw) return cachedIds;
+  cachedRaw = raw;
+
+  if (!raw) {
+    cachedIds = EMPTY;
+    return cachedIds;
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    cachedIds = Array.isArray(parsed)
+      ? parsed.filter((id): id is string => typeof id === "string").slice(0, MAX_ITEMS)
+      : EMPTY;
+  } catch {
+    cachedIds = EMPTY;
+  }
+
+  return cachedIds;
+}
+
+function getServerSnapshot(): string[] {
+  return EMPTY;
+}
+
+function subscribe(callback: () => void) {
+  listeners.add(callback);
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === STORAGE_KEY) callback();
+  };
+  window.addEventListener("storage", onStorage);
+
+  return () => {
+    listeners.delete(callback);
+    window.removeEventListener("storage", onStorage);
+  };
+}
+
+function writeIds(ids: string[]) {
+  cachedRaw = JSON.stringify(ids);
+  cachedIds = ids;
+
+  try {
+    window.localStorage.setItem(STORAGE_KEY, cachedRaw);
+  } catch {
+    /* A blocked storage write should not break comparison. */
+  }
+
+  listeners.forEach((listener) => listener());
+}
 
 type CompareValue = {
   ids: string[];
@@ -31,50 +94,27 @@ export function useCompare() {
 }
 
 export function CompareProvider({ children }: { children: React.ReactNode }) {
-  const [ids, setIds] = useState<string[]>([]);
-  const [ready, setReady] = useState(false);
+  const ids = useSyncExternalStore(subscribe, readIds, getServerSnapshot);
+  const ready = useHydrated();
 
-  useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed: unknown = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          setIds(parsed.filter((id): id is string => typeof id === "string").slice(0, MAX_ITEMS));
-        }
-      }
-    } catch {
-      /* A broken value should not block the page. */
+  const toggle = useCallback((id: string) => {
+    const current = readIds();
+    if (current.includes(id)) {
+      writeIds(current.filter((entry) => entry !== id));
+      return;
     }
-    setReady(true);
+    if (current.length >= MAX_ITEMS) {
+      toast.info(`Compare holds ${MAX_ITEMS} items. Remove one first.`);
+      return;
+    }
+    writeIds([...current, id]);
   }, []);
-
-  useEffect(() => {
-    if (!ready) return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
-  }, [ids, ready]);
-
-  const toggle = useCallback(
-    (id: string) => {
-      setIds((current) => {
-        if (current.includes(id)) {
-          return current.filter((entry) => entry !== id);
-        }
-        if (current.length >= MAX_ITEMS) {
-          toast.info(`Compare holds ${MAX_ITEMS} items. Remove one first.`);
-          return current;
-        }
-        return [...current, id];
-      });
-    },
-    [],
-  );
 
   const remove = useCallback((id: string) => {
-    setIds((current) => current.filter((entry) => entry !== id));
+    writeIds(readIds().filter((entry) => entry !== id));
   }, []);
 
-  const clear = useCallback(() => setIds([]), []);
+  const clear = useCallback(() => writeIds([]), []);
 
   const value = useMemo(
     () => ({
