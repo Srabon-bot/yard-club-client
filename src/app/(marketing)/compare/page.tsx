@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatBDT } from "@/lib/format";
+import { bypassImageOptimization } from "@/lib/images";
 import { equipment as allEquipment } from "@/lib/mock/equipment";
 import { isAvailableNow } from "@/lib/data/equipment";
 import { StatusBadge } from "@/components/site/status-badge";
@@ -100,6 +101,7 @@ async function CompareContent({
                       src={item.image}
                       alt={item.name}
                       fill
+                      unoptimized={bypassImageOptimization(item.image)}
                       className="object-cover"
                     />
                   </div>

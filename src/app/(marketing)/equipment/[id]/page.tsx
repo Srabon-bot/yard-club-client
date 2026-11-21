@@ -30,6 +30,7 @@ import {
 import { getOwner, listOwners } from "@/lib/data/owners";
 import { listReviews } from "@/lib/data/reviews";
 import { formatBDT, formatDate, formatShortDate } from "@/lib/format";
+import { bypassImageOptimization } from "@/lib/images";
 import { equipment } from "@/lib/mock/equipment";
 import { TODAY_ISO } from "@/lib/today";
 
@@ -169,6 +170,7 @@ export default async function EquipmentDetailPage({
                   src={item.image}
                   alt={`${item.name} in ${item.location}`}
                   fill
+                  unoptimized={bypassImageOptimization(item.image)}
                   priority
                   sizes="(min-width: 1024px) 68vw, 100vw"
                   className="object-cover"

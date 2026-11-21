@@ -5,10 +5,9 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   images: {
-    remotePatterns: [
-      { protocol: "https", hostname: "**" },
-      { protocol: "http", hostname: "**" },
-    ],
+    remotePatterns: [{ protocol: "https", hostname: "i.ibb.co" }],
+    contentDispositionType: "attachment",
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   turbopack: {
     rules: {

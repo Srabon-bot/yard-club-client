@@ -14,6 +14,7 @@ import { StatusBadge } from "@/components/site/status-badge";
 import { Button } from "@/components/ui/button";
 import { isAvailableNow } from "@/lib/data/equipment";
 import { formatBDT } from "@/lib/format";
+import { bypassImageOptimization } from "@/lib/images";
 import { favorites } from "@/lib/mock/favorites";
 import { equipment as allEquipment } from "@/lib/mock/equipment";
 import type { Equipment } from "@/lib/types";
@@ -74,6 +75,7 @@ export default function CustomerFavouritesPage() {
                           src={item.image}
                           alt={item.name}
                           fill
+                          unoptimized={bypassImageOptimization(item.image)}
                           className="object-cover"
                           sizes="40px"
                         />

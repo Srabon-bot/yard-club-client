@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { deleteEquipmentAction } from "@/lib/actions/equipment";
 import { formatBDT } from "@/lib/format";
+import { bypassImageOptimization } from "@/lib/images";
 import type { Equipment } from "@/lib/types";
 
 export type OwnerEquipment = Equipment & {
@@ -83,6 +84,7 @@ export function OwnerEquipmentTable({ items }: { items: OwnerEquipment[] }) {
                     src={item.image}
                     alt={item.name}
                     fill
+                    unoptimized={bypassImageOptimization(item.image)}
                     className="object-cover"
                     sizes="40px"
                   />

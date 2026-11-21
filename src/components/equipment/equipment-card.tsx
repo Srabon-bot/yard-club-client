@@ -4,6 +4,7 @@ import { CompareToggle } from "@/components/compare/compare-toggle";
 import { DetailLink } from "@/components/equipment/detail-link";
 import { StatusBadge } from "@/components/site/status-badge";
 import { formatBDT } from "@/lib/format";
+import { bypassImageOptimization } from "@/lib/images";
 import type { Equipment, Owner } from "@/lib/types";
 
 const RENTAL_LABEL = {
@@ -43,6 +44,7 @@ export function EquipmentCard({
           src={item.image}
           alt={`${item.name} in ${item.location}`}
           fill
+          unoptimized={bypassImageOptimization(item.image)}
           priority={priority}
           sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
           className="object-cover transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.03]"

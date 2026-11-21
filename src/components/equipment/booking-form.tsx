@@ -15,6 +15,7 @@ import { StatusBadge } from "@/components/site/status-badge";
 import { Button } from "@/components/ui/button";
 import type { EquipmentHold } from "@/lib/data/bookings";
 import { daysBetween, formatBDT } from "@/lib/format";
+import { bypassImageOptimization } from "@/lib/images";
 import type { Equipment, Owner } from "@/lib/types";
 
 const pad = (value: number) => String(value).padStart(2, "0");
@@ -242,6 +243,7 @@ export function BookingForm({
                 src={item.image}
                 alt=""
                 fill
+                unoptimized={bypassImageOptimization(item.image)}
                 sizes="56px"
                 className="object-cover"
               />

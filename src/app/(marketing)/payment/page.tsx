@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getEquipmentById } from "@/lib/data/equipment";
 import { getOwner } from "@/lib/data/owners";
 import { daysBetween, formatBDT, formatDate } from "@/lib/format";
+import { bypassImageOptimization } from "@/lib/images";
 import { currentUser } from "@/lib/mock/users";
 import { TODAY_ISO } from "@/lib/today";
 
@@ -218,6 +219,7 @@ async function Checkout({
                   src={item.image}
                   alt=""
                   fill
+                  unoptimized={bypassImageOptimization(item.image)}
                   sizes="64px"
                   className="object-cover"
                 />

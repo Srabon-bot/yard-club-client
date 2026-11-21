@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, X } from "lucide-react";
 import { useCompare } from "@/components/compare/compare-provider";
+import { bypassImageOptimization } from "@/lib/images";
 import { equipment } from "@/lib/mock/equipment";
 
 export function CompareTray() {
@@ -43,6 +44,7 @@ export function CompareTray() {
                 src={item.image}
                 alt=""
                 fill
+                unoptimized={bypassImageOptimization(item.image)}
                 sizes="44px"
                 className="object-cover"
               />
