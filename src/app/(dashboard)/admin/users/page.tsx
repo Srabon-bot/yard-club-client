@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { UsersRound } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import { UserActions } from "@/components/dashboard/user-actions";
 import {
   DashboardHeading,
   DataTable,
@@ -11,6 +12,7 @@ import {
 } from "@/components/dashboard/parts";
 import { StatusBadge } from "@/components/site/status-badge";
 import { Button } from "@/components/ui/button";
+import { requireRole } from "@/lib/api.server";
 import { listUsers } from "@/lib/data/users";
 import { formatDate } from "@/lib/format";
 import { oneOf, positiveInt } from "@/lib/search-params";
@@ -30,8 +32,10 @@ const PER_PAGE = 8;
 
 async function UsersContent({
   searchParams,
+  actorId,
 }: {
   searchParams: Promise<{ q?: string; role?: string; page?: string }>;
+  actorId: string;
 }) {
   const sp = await searchParams;
   const q = typeof sp.q === "string" ? sp.q : "";
@@ -139,13 +143,13 @@ async function UsersContent({
                 </StatusBadge>
               </td>
               <td className="px-3 py-3">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="pointer-events-none opacity-70"
-                >
-                  Manage
-                </Button>
+                <UserActions
+                  key={`${u.id}-${u.role}-${u.status}`}
+                  id={u.id}
+                  role={u.role}
+                  status={u.status}
+                  isSelf={u.id === actorId}
+                />
               </td>
             </tr>
           ))}
@@ -155,15 +159,16 @@ async function UsersContent({
   );
 }
 
-export default function AdminUsersPage({
+export default async function AdminUsersPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string; role?: string; page?: string }>;
 }) {
+  const actor = await requireRole("admin", "/admin/users");
   return (
     <DashboardShell>
       <Suspense fallback={<div className="p-8 font-mono text-xs">Loading users directory...</div>}>
-        <UsersContent searchParams={searchParams} />
+        <UsersContent searchParams={searchParams} actorId={actor.id} />
       </Suspense>
     </DashboardShell>
   );

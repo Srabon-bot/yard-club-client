@@ -22,16 +22,23 @@ import {
   StatCard,
 } from "@/components/dashboard/parts";
 import { Button } from "@/components/ui/button";
+import { requireRole } from "@/lib/api.server";
+import { getAdminAnalytics } from "@/lib/data/analytics";
 import { listBookings } from "@/lib/data/bookings";
+import { listAllEquipment } from "@/lib/data/equipment";
 import { formatBDT, formatCompactBDT, formatShortDate } from "@/lib/format";
-import { analytics } from "@/lib/mock/analytics";
-import { equipment as allEquipment } from "@/lib/mock/equipment";
 
 export const metadata: Metadata = { title: "Admin overview" };
 
 export default async function AdminOverviewPage() {
-  const recentBookings = await listBookings();
-  const pendingEquipment = allEquipment.filter((e) => e.status === "pending");
+  await requireRole("admin", "/admin");
+  const [analytics, recentBookings, equipment] = await Promise.all([
+    getAdminAnalytics(),
+    listBookings(),
+    listAllEquipment({ perPage: 100 }),
+  ]);
+
+  const pendingEquipment = equipment.items.filter((e) => e.status === "pending");
   const last5 = recentBookings.slice(0, 5);
 
   return (

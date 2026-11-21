@@ -21,25 +21,24 @@ import {
   StatCard,
 } from "@/components/dashboard/parts";
 import { Button } from "@/components/ui/button";
+import { requireRole } from "@/lib/api.server";
+import { getOwnerAnalytics } from "@/lib/data/analytics";
 import { getBookingStats, getOwnerBookings } from "@/lib/data/bookings";
+import { listMyEquipment } from "@/lib/data/equipment";
 import { formatBDT, formatShortDate } from "@/lib/format";
-import { analytics } from "@/lib/mock/analytics";
-import { equipment as allEquipment } from "@/lib/mock/equipment";
 
 export const metadata: Metadata = { title: "Owner overview" };
 
-const OWNER_ID = "rafiul-islam";
-
 export default async function OwnerOverviewPage() {
-  const [bookings, stats] = await Promise.all([
-    getOwnerBookings(OWNER_ID),
-    getBookingStats({ ownerId: OWNER_ID }),
+  await requireRole("owner", "/owner");
+  const [bookings, stats, analytics, owned] = await Promise.all([
+    getOwnerBookings(),
+    getBookingStats(),
+    getOwnerAnalytics(),
+    listMyEquipment(),
   ]);
 
-  const ownerEquipment = allEquipment.filter((e) => e.ownerId === OWNER_ID);
-  const pendingEquipment = ownerEquipment.filter(
-    (e) => e.status === "pending",
-  );
+  const pendingEquipment = owned.items.filter((item) => item.status === "pending");
   const recentBookings = bookings.slice(0, 5);
 
   return (

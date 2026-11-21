@@ -1,9 +1,9 @@
-"use client";
-
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Package } from "lucide-react";
-import { toast } from "sonner";
+import { EquipmentModerationActions } from "@/components/dashboard/equipment-moderation-actions";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import {
   DashboardHeading,
@@ -11,62 +11,82 @@ import {
   EmptyState,
   EquipmentStatusBadge,
   FilterTabs,
+  TablePager,
 } from "@/components/dashboard/parts";
 import { Button } from "@/components/ui/button";
+import { requireRole } from "@/lib/api.server";
+import { listAllEquipment } from "@/lib/data/equipment";
 import { formatBDT } from "@/lib/format";
 import { bypassImageOptimization } from "@/lib/images";
-import { equipment as allEquipment } from "@/lib/mock/equipment";
-import { oneOf } from "@/lib/search-params";
-import { useSearchParams } from "next/navigation";
+import { oneOf, positiveInt } from "@/lib/search-params";
+
+export const metadata: Metadata = { title: "Equipment approvals" };
 
 const STATUSES = ["all", "approved", "pending", "rejected"] as const;
+const PER_PAGE = 10;
 
-const counts = {
-  all: allEquipment.length,
-  approved: allEquipment.filter((e) => e.status === "approved").length,
-  pending: allEquipment.filter((e) => e.status === "pending").length,
-  rejected: allEquipment.filter((e) => e.status === "rejected").length,
-};
+async function AdminEquipmentContent({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; q?: string; page?: string }>;
+}) {
+  const sp = await searchParams;
+  const status = oneOf(sp.status ?? "all", STATUSES, "all");
+  const q = typeof sp.q === "string" ? sp.q : "";
+  const page = positiveInt(sp.page);
 
-function AdminEquipmentContent() {
-  const sp = useSearchParams();
-  const rawStatus = sp.get("status") ?? "all";
-  const status = oneOf(rawStatus, STATUSES, "all");
+  const result = await listAllEquipment({
+    status,
+    q,
+    page,
+    perPage: PER_PAGE,
+  });
 
-  const rows =
-    status === "all"
-      ? allEquipment
-      : allEquipment.filter((e) => e.status === status);
+  const statusParam = status === "all" ? undefined : status;
+  const qParam = q || undefined;
 
   return (
     <div className="grid gap-6">
       <DashboardHeading
         eyebrow="Admin"
         title="Equipment approvals"
-        description="Approve, reject or remove any listing on the platform."
+        description="Review, moderate and feature every listing on the platform."
       />
+
+      <form method="GET" className="flex gap-2">
+        <input
+          name="q"
+          defaultValue={q}
+          placeholder="Search name, brand or location…"
+          className="h-10 flex-1 rounded-[6px] border-2 border-ink bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-lime focus:ring-offset-1"
+        />
+        <Button type="submit" variant="outline" className="h-10">
+          Search
+        </Button>
+      </form>
 
       <FilterTabs
         options={[
-          { value: "all", label: "All", count: counts.all },
-          { value: "approved", label: "Approved", count: counts.approved },
-          { value: "pending", label: "Pending", count: counts.pending },
-          { value: "rejected", label: "Rejected", count: counts.rejected },
+          { value: "all", label: "All", count: result.counts.all },
+          { value: "approved", label: "Approved", count: result.counts.approved },
+          { value: "pending", label: "Pending", count: result.counts.pending },
+          { value: "rejected", label: "Rejected", count: result.counts.rejected },
         ]}
         current={status}
         basePath="/admin/equipment"
+        params={{ q: qParam }}
         label="Filter by status"
       />
 
-      {rows.length === 0 ? (
+      {result.items.length === 0 ? (
         <EmptyState
           icon={Package}
-          title="No equipment"
-          description={`No ${status} listings.`}
+          title="No listings found"
+          description={q ? `No results for "${q}".` : `No ${status} listings.`}
         />
       ) : (
         <DataTable
-          minWidth={900}
+          minWidth={1060}
           head={[
             { label: "Equipment" },
             { label: "Owner" },
@@ -75,76 +95,67 @@ function AdminEquipmentContent() {
             { label: "Status" },
             { label: "Actions" },
           ]}
+          footer={
+            <TablePager
+              page={result.page}
+              totalPages={result.totalPages}
+              total={result.total}
+              perPage={PER_PAGE}
+              basePath="/admin/equipment"
+              params={{ status: statusParam, q: qParam }}
+              noun="listings"
+            />
+          }
         >
-          {rows.map((e) => (
+          {result.items.map((item) => (
             <tr
-              key={e.id}
+              key={item.id}
               className="border-b border-ink/10 text-sm last:border-b-0 hover:bg-secondary/40"
             >
               <td className="px-3 py-3">
                 <div className="flex items-center gap-3">
                   <div className="relative size-10 shrink-0 overflow-hidden rounded-[6px] border-2 border-ink">
                     <Image
-                      src={e.image}
-                      alt={e.name}
+                      src={item.image}
+                      alt={item.name}
                       fill
-                      unoptimized={bypassImageOptimization(e.image)}
+                      unoptimized={bypassImageOptimization(item.image)}
                       className="object-cover"
                       sizes="40px"
                     />
                   </div>
                   <div>
-                    <p className="font-semibold leading-tight">{e.name}</p>
+                    <Link
+                      href={`/equipment/${item.slug ?? item.id}`}
+                      className="font-semibold leading-tight hover:text-primary hover:underline"
+                    >
+                      {item.name}
+                    </Link>
                     <p className="font-mono text-[10px] text-ink-soft">
-                      {e.brand} {e.model}
+                      {item.brand} {item.model}
                     </p>
                   </div>
                 </div>
               </td>
               <td className="px-3 py-3 font-mono text-[11px] text-ink-soft">
-                {e.ownerId}
+                {item.owner?.name ?? item.ownerId}
               </td>
               <td className="px-3 py-3 capitalize text-ink-soft">
-                {e.category}
+                {item.category}
               </td>
               <td className="px-3 py-3 text-right font-mono text-[12px] tabular-nums">
-                {formatBDT(e.pricePerDay)}
+                {formatBDT(item.pricePerDay)}
               </td>
               <td className="px-3 py-3">
-                <EquipmentStatusBadge status={e.status} />
+                <EquipmentStatusBadge status={item.status} />
               </td>
               <td className="px-3 py-3">
-                <div className="flex items-center gap-1.5">
-                  <Button
-                    size="sm"
-                    onClick={() =>
-                      toast.success(`Approved: ${e.name}`)
-                    }
-                  >
-                    Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      toast.error(`Rejected: ${e.name}`)
-                    }
-                  >
-                    Reject
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-red-300 text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
-                    onClick={() =>
-                      toast.error(`Deleted: ${e.name}`, {
-                        description: "This action cannot be undone.",
-                      })
-                    }
-                  >
-                    Delete
-                  </Button>
-                </div>
+                <EquipmentModerationActions
+                  id={item.id}
+                  name={item.name}
+                  status={item.status}
+                  featured={item.featured}
+                />
               </td>
             </tr>
           ))}
@@ -154,11 +165,16 @@ function AdminEquipmentContent() {
   );
 }
 
-export default function AdminEquipmentPage() {
+export default async function AdminEquipmentPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; q?: string; page?: string }>;
+}) {
+  await requireRole("admin", "/admin/equipment");
   return (
     <DashboardShell>
       <Suspense fallback={<div className="p-8 font-mono text-xs">Loading approvals...</div>}>
-        <AdminEquipmentContent />
+        <AdminEquipmentContent searchParams={searchParams} />
       </Suspense>
     </DashboardShell>
   );

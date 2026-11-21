@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { CalendarDays } from "lucide-react";
+import { BookingActions } from "@/components/dashboard/booking-actions";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import {
   BookingStatusBadge,
@@ -11,18 +12,15 @@ import {
   PaymentStatusBadge,
   TablePager,
 } from "@/components/dashboard/parts";
-import {
-  getBookingStats,
-  getOwnerBookings,
-} from "@/lib/data/bookings";
+import { requireRole } from "@/lib/api.server";
+import { getOwnerBookingPage } from "@/lib/data/bookings";
 import { formatBDT, formatShortDate } from "@/lib/format";
 import { oneOf, positiveInt } from "@/lib/search-params";
 
 export const metadata: Metadata = { title: "Equipment rentals" };
 
-const OWNER_ID = "rafiul-islam";
 const PER_PAGE = 8;
-const STATUSES = ["all", "upcoming", "active", "completed", "cancelled"] as const;
+const STATUSES = ["all", "pending", "upcoming", "active", "completed", "cancelled"] as const;
 
 async function OwnerRentalsContent({
   searchParams,
@@ -34,19 +32,11 @@ async function OwnerRentalsContent({
   const status = oneOf(rawStatus, STATUSES, "all");
   const page = positiveInt(sp.page);
 
-  const [allBookings, stats] = await Promise.all([
-    getOwnerBookings(OWNER_ID),
-    getBookingStats({ ownerId: OWNER_ID }),
-  ]);
-
-  const filtered =
-    status === "all"
-      ? allBookings
-      : allBookings.filter((b) => b.bookingStatus === status);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
-  const safePage = Math.min(page, totalPages);
-  const rows = filtered.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
+  const result = await getOwnerBookingPage({ status, page, perPage: PER_PAGE });
+  const { items: rows, counts: stats, total } = result;
+  const allCount = stats.all;
+  const totalPages = result.totalPages;
+  const safePage = result.page;
   const statusParam = status === "all" ? undefined : status;
 
   return (
@@ -59,7 +49,8 @@ async function OwnerRentalsContent({
 
       <FilterTabs
         options={[
-          { value: "all", label: "All", count: allBookings.length },
+          { value: "all", label: "All", count: allCount },
+          { value: "pending", label: "Pending", count: stats.pending },
           { value: "upcoming", label: "Upcoming", count: stats.upcoming },
           { value: "active", label: "Active", count: stats.active },
           { value: "completed", label: "Completed", count: stats.completed },
@@ -91,12 +82,13 @@ async function OwnerRentalsContent({
             { label: "Amount", align: "right" },
             { label: "Payment" },
             { label: "Status" },
+            { label: "Actions" },
           ]}
           footer={
             <TablePager
               page={safePage}
               totalPages={totalPages}
-              total={filtered.length}
+              total={total}
               perPage={PER_PAGE}
               basePath="/owner/rentals"
               params={{ status: statusParam }}
@@ -134,6 +126,14 @@ async function OwnerRentalsContent({
               <td className="px-3 py-3">
                 <BookingStatusBadge status={b.bookingStatus} />
               </td>
+              <td className="px-3 py-3">
+                <BookingActions
+                  key={`${b.id}-${b.bookingStatus}`}
+                  id={b.id}
+                  bookingStatus={b.bookingStatus}
+                  scope="owner"
+                />
+              </td>
             </tr>
           ))}
         </DataTable>
@@ -142,11 +142,12 @@ async function OwnerRentalsContent({
   );
 }
 
-export default function OwnerRentalsPage({
+export default async function OwnerRentalsPage({
   searchParams,
 }: {
   searchParams: Promise<{ status?: string; page?: string }>;
 }) {
+  await requireRole("owner", "/owner/rentals");
   return (
     <DashboardShell>
       <Suspense fallback={<div className="p-8 font-mono text-xs">Loading rentals...</div>}>
