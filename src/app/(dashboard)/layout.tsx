@@ -1,5 +1,8 @@
 import { SiteHeader } from "@/components/site/site-header";
 
+// Session-backed dashboards read request data, so they render as blocking routes.
+export const instant = false;
+
 export default function DashboardLayout({
   children,
 }: {

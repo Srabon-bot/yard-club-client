@@ -17,22 +17,26 @@ import {
   StatCard,
 } from "@/components/dashboard/parts";
 import { Button } from "@/components/ui/button";
-import { getBookingStats, getCustomerBookings } from "@/lib/data/bookings";
+import { requireRole } from "@/lib/api.server";
+import {
+  bookingSpendSeries,
+  getCustomerBookingStats,
+  getCustomerBookings,
+} from "@/lib/data/bookings";
 import { formatBDT, formatShortDate } from "@/lib/format";
-import { analytics } from "@/lib/mock/analytics";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function CustomerOverviewPage() {
+  await requireRole("customer", "/dashboard");
   const [stats, allBookings] = await Promise.all([
-    getBookingStats({ customerId: "u-01" }),
-    getCustomerBookings("u-01"),
+    getCustomerBookingStats(),
+    getCustomerBookings(),
   ]);
 
   const active = allBookings.filter((b) => b.bookingStatus === "active");
   const upcoming = allBookings.filter((b) => b.bookingStatus === "upcoming");
-
-  const sparkValues = analytics.months.slice(-6).map((m) => m.revenue);
+  const sparkValues = bookingSpendSeries(allBookings);
 
   return (
     <DashboardShell>

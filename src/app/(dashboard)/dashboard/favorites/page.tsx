@@ -1,10 +1,9 @@
-"use client";
-
 import Image from "next/image";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { Heart, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { Heart } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import { RemoveFavoriteButton } from "@/components/dashboard/remove-favorite-button";
 import {
   DashboardHeading,
   DataTable,
@@ -12,34 +11,34 @@ import {
 } from "@/components/dashboard/parts";
 import { StatusBadge } from "@/components/site/status-badge";
 import { Button } from "@/components/ui/button";
+import { requireRole } from "@/lib/api.server";
 import { isAvailableNow } from "@/lib/data/equipment";
+import { listFavorites } from "@/lib/data/favorites";
 import { formatBDT } from "@/lib/format";
 import { bypassImageOptimization } from "@/lib/images";
-import { favorites } from "@/lib/mock/favorites";
-import { equipment as allEquipment } from "@/lib/mock/equipment";
 import type { Equipment } from "@/lib/types";
 
-type FavRow = { id: string; item: Equipment };
+export const metadata: Metadata = { title: "Favourites" };
 
-const favRows: FavRow[] = favorites
-  .filter((f) => f.customerId === "u-01")
-  .map((f) => ({
-    id: f.id,
-    item: allEquipment.find((e) => e.id === f.equipmentId)!,
-  }))
-  .filter((r) => Boolean(r.item));
+export default async function CustomerFavouritesPage() {
+  await requireRole("customer", "/dashboard/favorites");
+  const favorites = await listFavorites();
+  const rows = favorites
+    .filter((favorite): favorite is typeof favorite & { equipment: Equipment } =>
+      Boolean(favorite.equipment),
+    )
+    .map((favorite) => ({ id: favorite.id, item: favorite.equipment }));
 
-export default function CustomerFavouritesPage() {
   return (
     <DashboardShell>
       <div className="grid gap-6">
         <DashboardHeading
           eyebrow="Customer"
           title="Saved for the next job"
-          description="Equipment you starred. Availability updates in real time."
+          description="Equipment you starred. Availability and rates come straight from the live catalogue."
         />
 
-        {favRows.length === 0 ? (
+        {rows.length === 0 ? (
           <EmptyState
             icon={Heart}
             title="Nothing saved yet"
@@ -61,8 +60,8 @@ export default function CustomerFavouritesPage() {
               { label: "Actions" },
             ]}
           >
-            {favRows.map(({ id, item }) => {
-              const avail = isAvailableNow(item);
+            {rows.map(({ id, item }) => {
+              const available = isAvailableNow(item);
               return (
                 <tr
                   key={id}
@@ -80,19 +79,15 @@ export default function CustomerFavouritesPage() {
                           sizes="40px"
                         />
                       </div>
-                      <span className="font-semibold leading-tight">
-                        {item.name}
-                      </span>
+                      <span className="font-semibold leading-tight">{item.name}</span>
                     </div>
                   </td>
-                  <td className="px-3 py-3 capitalize text-ink-soft">
-                    {item.category}
-                  </td>
+                  <td className="px-3 py-3 capitalize text-ink-soft">{item.category}</td>
                   <td className="px-3 py-3 text-right font-mono text-[12px] tabular-nums">
                     {formatBDT(item.pricePerDay)}
                   </td>
                   <td className="px-3 py-3">
-                    {avail ? (
+                    {available ? (
                       <StatusBadge tone="green">Available</StatusBadge>
                     ) : (
                       <StatusBadge tone="amber">On rent</StatusBadge>
@@ -101,20 +96,9 @@ export default function CustomerFavouritesPage() {
                   <td className="px-3 py-3">
                     <div className="flex items-center gap-2">
                       <Button asChild size="sm">
-                        <Link href={`/equipment/${item.id}`}>View</Link>
+                        <Link href={`/equipment/${item.slug ?? item.id}`}>View</Link>
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          toast.success("Removed from favourites", {
-                            description: item.name,
-                          })
-                        }
-                      >
-                        <Trash2 className="size-3.5" aria-hidden="true" />
-                        Remove
-                      </Button>
+                      <RemoveFavoriteButton equipmentId={item.id} name={item.name} />
                     </div>
                   </td>
                 </tr>

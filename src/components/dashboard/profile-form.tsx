@@ -1,12 +1,14 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState, useActionState } from "react";
 import { Camera, Loader2, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { updateProfileAction } from "@/lib/actions/profile";
+import { authClient } from "@/lib/auth-client";
 import type { User } from "@/lib/types";
 
 const ROLE_LABEL: Record<User["role"], string> = {
@@ -17,8 +19,17 @@ const ROLE_LABEL: Record<User["role"], string> = {
 
 export function ProfileForm({ user }: { user: User }) {
   const [photo, setPhoto] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [state, formAction, pending] = useActionState(
+    updateProfileAction,
+    undefined,
+  );
+
+  useEffect(() => {
+    if (!state) return;
+    if (state.ok) toast.success(state.message);
+    else toast.error(state.error);
+  }, [state]);
 
   const pickPhoto = (file?: File) => {
     if (!file) return;
@@ -33,19 +44,8 @@ export function ProfileForm({ user }: { user: User }) {
     setPhoto(URL.createObjectURL(file));
   };
 
-  const save = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setSaving(true);
-    window.setTimeout(() => {
-      setSaving(false);
-      toast.success("Profile saved", {
-        description: "Your details are updated across Yardclub.",
-      });
-    }, 650);
-  };
-
   return (
-    <form onSubmit={save} className="grid gap-6">
+    <form action={formAction} className="grid gap-6">
       <section className="rounded-[10px] border-2 border-ink bg-surface shadow-offset-sm">
         <div className="border-b-2 border-ink px-4 py-3">
           <h2 className="font-heading text-base font-extrabold tracking-[-0.03em]">
@@ -92,9 +92,22 @@ export function ProfileForm({ user }: { user: User }) {
               </Button>
             )}
             <p className="w-full font-mono text-[9px] uppercase tracking-[0.08em] text-ink-soft">
-              JPG or PNG · up to 2 MB
+              Preview only · hosted image URLs are saved below
             </p>
           </div>
+        </div>
+        <div className="border-t border-ink/15 px-4 py-3">
+          <Label htmlFor="profile-image" className="text-xs font-semibold">
+            Hosted image URL
+          </Label>
+          <Input
+            id="profile-image"
+            name="image"
+            type="url"
+            defaultValue={user.image ?? ""}
+            placeholder="https://…"
+            className="mt-1.5 h-10 rounded-[6px] border-2 border-ink bg-background text-sm"
+          />
         </div>
       </section>
 
@@ -127,13 +140,13 @@ export function ProfileForm({ user }: { user: User }) {
             </Label>
             <Input
               id="profile-email"
-              name="email"
               type="email"
-              defaultValue={user.email}
-              className="h-11 rounded-[6px] border-2 border-ink bg-background text-sm"
+              value={user.email}
+              readOnly
+              className="h-11 rounded-[6px] border-2 border-ink/25 bg-secondary/50 text-sm"
             />
             <p className="font-mono text-[9px] uppercase tracking-[0.06em] text-ink-soft">
-              Google-connected · verified
+              Managed by your sign-in account
             </p>
           </div>
 
@@ -185,19 +198,38 @@ export function ProfileForm({ user }: { user: User }) {
               This is the default pickup and delivery address on your bookings.
             </p>
           </div>
+
+          <div className="grid gap-1.5 sm:col-span-2">
+            <Label htmlFor="profile-bio" className="text-xs font-semibold">
+              Short bio
+            </Label>
+            <Textarea
+              id="profile-bio"
+              name="bio"
+              rows={3}
+              defaultValue={user.bio ?? ""}
+              placeholder="Tell renters what you do…"
+              className="rounded-[6px] border-2 border-ink bg-background text-sm"
+            />
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t-2 border-ink px-4 py-3">
           <p className="font-mono text-[9px] uppercase tracking-[0.08em] text-ink-soft">
             Changes apply to future bookings
           </p>
-          <Button type="submit" disabled={saving} className="h-11">
-            {saving ? (
+          {state && !state.ok && (
+            <p role="alert" className="text-[11px] text-red-600">
+              {state.error}
+            </p>
+          )}
+          <Button type="submit" disabled={pending} className="h-11">
+            {pending ? (
               <Loader2 className="size-4 animate-spin" aria-hidden="true" />
             ) : (
               <Save className="size-4" aria-hidden="true" />
             )}
-            {saving ? "Saving…" : "Save changes"}
+            {pending ? "Saving…" : "Save changes"}
           </Button>
         </div>
       </section>
@@ -208,25 +240,50 @@ export function ProfileForm({ user }: { user: User }) {
 export function PasswordForm() {
   const [saving, setSaving] = useState(false);
 
+  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const currentPassword = String(formData.get("currentPassword") ?? "");
+    const newPassword = String(formData.get("newPassword") ?? "");
+
+    if (newPassword.length < 8) {
+      toast.error("Use at least 8 characters for the new password.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const result = await authClient.changePassword({
+        currentPassword,
+        newPassword,
+      });
+      if (result.error) {
+        toast.error("Could not update password", {
+          description: result.error.message,
+        });
+        return;
+      }
+      toast.success("Password updated");
+      event.currentTarget.reset();
+    } catch {
+      toast.error("Could not update password. Try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <form
-      onSubmit={(event) => {
-        event.preventDefault();
-        setSaving(true);
-        window.setTimeout(() => {
-          setSaving(false);
-          toast.success("Password updated");
-        }, 600);
-      }}
-      className="grid gap-3"
-    >
+    <form onSubmit={submit} className="grid gap-3">
       <div className="grid gap-1.5">
         <Label htmlFor="current-password" className="text-xs font-semibold">
           Current password
         </Label>
         <Input
           id="current-password"
+          name="currentPassword"
           type="password"
+          required
+          autoComplete="current-password"
           placeholder="••••••••"
           className="h-10 rounded-[6px] border-2 border-ink bg-background"
         />
@@ -237,7 +294,10 @@ export function PasswordForm() {
         </Label>
         <Input
           id="new-password"
+          name="newPassword"
           type="password"
+          required
+          autoComplete="new-password"
           placeholder="At least 8 characters"
           className="h-10 rounded-[6px] border-2 border-ink bg-background"
         />
