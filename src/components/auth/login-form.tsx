@@ -54,10 +54,21 @@ export function GoogleButton({ label }: { label: string }) {
   );
 }
 
+function safeNextPath(value: string | null): string | null {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) return null;
+  try {
+    const url = new URL(value, window.location.origin);
+    if (url.origin !== window.location.origin) return null;
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return null;
+  }
+}
+
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nextUrl = searchParams.get("next");
+  const nextUrl = safeNextPath(searchParams.get("next"));
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
