@@ -161,9 +161,10 @@ async function CustomerRentalsContent({
               </td>
               <td className="px-3 py-3">
                 <BookingActions
-                  key={`${b.id}-${b.bookingStatus}`}
+                  key={`${b.id}-${b.bookingStatus}-${b.paymentStatus}`}
                   id={b.id}
                   bookingStatus={b.bookingStatus}
+                  paymentStatus={b.paymentStatus}
                   scope="customer"
                 />
               </td>

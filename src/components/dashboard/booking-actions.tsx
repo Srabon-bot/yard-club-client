@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { updateBookingAction } from "@/lib/actions/bookings";
+import { createCheckoutAction } from "@/lib/actions/payments";
 import type { BookingStatus, PaymentStatus } from "@/lib/types";
 
 const NEXT_STATUS: Record<
@@ -38,9 +39,22 @@ export function BookingActions({
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [checkoutPending, startCheckoutTransition] = useTransition();
   const [payment, setPayment] = useState<PaymentStatus | "">(
     paymentStatus ?? "",
   );
+
+  const startCheckout = () => {
+    startCheckoutTransition(async () => {
+      toast.info("Opening secure Stripe Checkout…");
+      const result = await createCheckoutAction(id);
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+      window.location.assign(result.url);
+    });
+  };
 
   const run = (input: {
     bookingStatus?: BookingStatus;
@@ -63,9 +77,26 @@ export function BookingActions({
       : undefined;
   const canCancel =
     bookingStatus === "pending" || bookingStatus === "upcoming";
+  const canPay =
+    scope === "customer" &&
+    bookingStatus === "upcoming" &&
+    ["unpaid", "pending", "failed"].includes(paymentStatus ?? "unpaid");
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
+      {canPay && (
+        <Button
+          size="sm"
+          disabled={pending || checkoutPending}
+          onClick={startCheckout}
+        >
+          {checkoutPending ? (
+            <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+          ) : (
+            "Pay now"
+          )}
+        </Button>
+      )}
       {canAdvance && (
         <Button size="sm" disabled={pending} onClick={() => run({ bookingStatus: canAdvance })}>
           {canAdvance === "upcoming"
@@ -79,7 +110,7 @@ export function BookingActions({
         <Button
           size="sm"
           variant="outline"
-          disabled={pending}
+          disabled={pending || checkoutPending}
           onClick={() => run({ bookingStatus: "cancelled" })}
         >
           {scope === "customer" ? "Cancel request" : "Decline"}

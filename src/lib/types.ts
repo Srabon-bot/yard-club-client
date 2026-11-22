@@ -114,9 +114,24 @@ export type Booking = {
   paymentStatus: PaymentStatus;
   bookingStatus: BookingStatus;
   createdAt: string;
+  paidAt?: string;
+  stripeSessionId?: string;
+  paymentIntentId?: string;
   contact: string;
   address: string;
   notes: string;
+};
+
+export type PaymentRecord = {
+  id: string;
+  bookingId: string;
+  bookingRef?: string;
+  amount: number;
+  currency: string;
+  status: "paid" | "failed" | "refunded";
+  paidAt?: string;
+  paymentIntentId?: string;
+  refundId?: string;
 };
 
 export type EquipmentHold = {
