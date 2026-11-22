@@ -63,17 +63,23 @@ export default async function EquipmentDetailPage({
 
   const { item, owner, holds, nextAvailable, today } = detail;
 
-  const [category, related, favorites, profile] = await Promise.all([
-    getCategory(item.category),
-    getRelatedEquipment(item.id, 3),
-    listFavorites(),
-    getProfile(),
-  ]);
+  const [categoryResult, relatedResult, favoritesResult, profileResult] =
+    await Promise.allSettled([
+      getCategory(item.category),
+      getRelatedEquipment(item.id, 3),
+      listFavorites(),
+      getProfile(),
+    ]);
+
+  const category = categoryResult.status === "fulfilled" ? categoryResult.value : null;
+  const related = relatedResult.status === "fulfilled" ? relatedResult.value : [];
+  const favorites = favoritesResult.status === "fulfilled" ? favoritesResult.value : [];
+  const profile = profileResult.status === "fulfilled" ? profileResult.value : null;
 
   const booking = {
     owner: owner ?? undefined,
     holds,
-    customer: { contact: profile.phone, address: profile.address },
+    customer: { contact: profile?.phone ?? "", address: profile?.address ?? "" },
   };
   const available = isAvailableNow(item);
   const categoryName = category?.name ?? "Equipment";

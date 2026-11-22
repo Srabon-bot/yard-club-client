@@ -115,14 +115,30 @@ export async function apiPublic<T>(
 }
 
 async function request<T>(path: string, init: RequestInit): Promise<T> {
-  let response: Response;
-  try {
-    response = await fetch(`${API_URL}${path}`, {
-      ...init,
-      cache: "no-store",
-      next: { revalidate: 0 },
-    });
-  } catch {
+  const isRead = !init.method || init.method.toUpperCase() === "GET";
+  let response: Response | undefined;
+  let lastError: unknown;
+
+  // Retry once on network / timeout errors for idempotent GET requests
+  const maxAttempts = isRead ? 2 : 1;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      response = await fetch(`${API_URL}${path}`, {
+        ...init,
+        cache: init.cache ?? "no-store",
+        next: init.next ?? { revalidate: 0 },
+        signal: init.signal ?? AbortSignal.timeout(10000),
+      });
+      break;
+    } catch (err) {
+      lastError = err;
+      if (attempt < maxAttempts) {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
+    }
+  }
+
+  if (!response) {
     throw new ApiError(
       "The Yardclub API is not reachable. Is the server running?",
       503,
