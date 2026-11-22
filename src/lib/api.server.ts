@@ -31,17 +31,36 @@ function asRole(value: unknown): UserRole {
  * API is called with a signed JWT instead of the session cookie.
  */
 export async function getSessionUser(): Promise<SessionUser | null> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) return null;
+  try {
+    const requestHeaders = await headers();
+    // Fast path: if no session cookie is present, skip hitting Better Auth / database
+    const cookieHeader = requestHeaders.get("cookie") ?? "";
+    if (
+      !cookieHeader.includes("better-auth.session_token") &&
+      !cookieHeader.includes("__Secure-better-auth.session_token")
+    ) {
+      return null;
+    }
 
-  const user = session.user as typeof session.user & {
-    role?: string | null;
-  };
+    const session = await auth.api.getSession({ headers: requestHeaders });
+    if (!session?.user) return null;
 
-  return {
-    id: String(user.id),
-    role: asRole(user.role),
-  };
+    const user = session.user as typeof session.user & {
+      role?: string | null;
+    };
+
+    return {
+      id: String(user.id),
+      role: asRole(user.role),
+    };
+  } catch (error: any) {
+    // During Next.js static prerendering, headers() intentionally throws a HANGING_PROMISE_REJECTION
+    // to signal the prerender runner that dynamic data was requested. Do not log this expected signal.
+    if (error?.digest !== "HANGING_PROMISE_REJECTION") {
+      console.error("Failed to read session user:", error);
+    }
+    return null;
+  }
 }
 
 /** Server-side route guard used by the three dashboard areas. */
@@ -105,7 +124,10 @@ export async function apiPublic<T>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> {
+  const isRead = !init.method || init.method.toUpperCase() === "GET";
   return request<T>(path, {
+    // Cache public reads for 60 seconds with Next.js ISR for snappy page loads
+    ...(isRead && !init.cache && !init.next ? { next: { revalidate: 60 } } : {}),
     ...init,
     headers: {
       ...(init.body ? { "content-type": "application/json" } : {}),
@@ -125,8 +147,8 @@ async function request<T>(path: string, init: RequestInit): Promise<T> {
     try {
       response = await fetch(`${API_URL}${path}`, {
         ...init,
-        cache: init.cache ?? "no-store",
-        next: init.next ?? { revalidate: 0 },
+        cache: init.cache ?? (init.next ? undefined : "no-store"),
+        next: init.next ?? (init.cache ? undefined : { revalidate: 0 }),
         signal: init.signal ?? AbortSignal.timeout(10000),
       });
       break;
