@@ -213,7 +213,7 @@ export default async function EquipmentPage({
                 variant="outline"
                 className="border-[#060605] bg-transparent text-[#060605] hover:bg-black/10"
               >
-                <Link href="/register">List your gear</Link>
+                <Link href="/register">Register</Link>
               </Button>
             </div>
           </div>

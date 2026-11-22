@@ -658,7 +658,7 @@ export default async function HomePage() {
                 variant="outline"
                 className="border-[#060605] bg-transparent text-[#060605] hover:bg-black/10"
               >
-                <Link href="/register">List your gear</Link>
+                <Link href="/register">Register</Link>
               </Button>
               <p className="mt-1 max-w-[36ch] font-mono text-[9px] leading-relaxed uppercase tracking-[0.08em] text-black/50 lg:text-right">
                 No account needed to browse. Sign in when you book.

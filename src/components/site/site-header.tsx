@@ -157,7 +157,7 @@ export function SiteHeader() {
                 asChild
                 className="hidden h-11 rounded-md border-2 border-ink bg-lime px-4 font-semibold text-primary-foreground shadow-offset-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-lime-hover hover:shadow-[4px_4px_0_var(--ink)] sm:inline-flex"
               >
-                <Link href="/register">List your gear</Link>
+                <Link href="/register">Register</Link>
               </Button>
             </>
           ) : (
@@ -318,7 +318,7 @@ export function SiteHeader() {
                         asChild
                         className="h-11 rounded-md border-2 border-ink bg-lime font-semibold text-primary-foreground shadow-offset-sm"
                       >
-                        <Link href="/register">List your gear</Link>
+                        <Link href="/register">Register</Link>
                       </Button>
                     </SheetClose>
                   </>
