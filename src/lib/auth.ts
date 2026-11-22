@@ -15,7 +15,27 @@ if (!/^mongodb(\+srv)?:\/\//.test(dbUrl)) {
   );
 }
 
-const client = new MongoClient(dbUrl);
+declare global {
+  // eslint-disable-next-line no-var
+  var _mongoAuthClient: MongoClient | undefined;
+}
+
+const client =
+  globalThis._mongoAuthClient ??
+  new MongoClient(dbUrl, {
+    maxPoolSize: 10,
+    minPoolSize: 1,
+    maxIdleTimeMS: 30000,
+    serverSelectionTimeoutMS: 5000,
+  });
+
+if (process.env.NODE_ENV !== "production") {
+  globalThis._mongoAuthClient = client;
+} else {
+  // In serverless production, cache client across warm lambda invocations
+  globalThis._mongoAuthClient = client;
+}
+
 const db = client.db("yardclubDB");
 const baseURL = (
   process.env.BETTER_AUTH_URL || "http://localhost:3000"
