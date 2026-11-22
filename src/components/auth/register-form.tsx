@@ -87,7 +87,6 @@ export function RegisterForm() {
         email,
         password,
         image: photoUrl || undefined,
-        // @ts-expect-error - Better-auth custom fields
         role,
         phone,
       });

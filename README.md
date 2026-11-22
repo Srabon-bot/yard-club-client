@@ -39,11 +39,10 @@ Open [http://localhost:3000](http://localhost:3000). The Express API must also b
 | `BETTER_AUTH_URL` | Public URL of this Next.js app. |
 | `BETTER_AUTH_DB_URL` | MongoDB connection string used by Better Auth. |
 | `API_URL` | Base URL of the Express API. Defaults to `http://localhost:5000`. |
-| `API_INTERNAL_KEY` | Shared server-only key sent to the Express API. Must match the server value. |
 | `GOOGLE_CLIENT_ID` | Optional. Enables Google sign-in when paired with the secret below. |
 | `GOOGLE_CLIENT_SECRET` | Optional. Enables Google sign-in when paired with the ID above. |
 
-`API_INTERNAL_KEY` and the session bridge are server-only. The browser never receives the internal key or the `x-user-id` header.
+The Better Auth JWT is minted with `auth.api.getToken()` inside `src/lib/api.server.ts`. It stays on the Next.js server and is sent to Express as `Authorization: Bearer <token>`; the browser never stores or reads it.
 
 ### Scripts
 
@@ -104,7 +103,7 @@ Private routes use `requireRole(roles, next)` from `src/lib/api.server.ts`. Sign
 
 ## How live data works
 
-- `src/lib/api.server.ts` reads the Better Auth session and calls the Express API with `x-internal-key` and `x-user-id`. `apiPublic` is used where no session is required.
+- `src/lib/api.server.ts` reads the Better Auth session, mints a JWT, and calls the Express API with `Authorization: Bearer <token>`. `apiPublic` is used where no session is required.
 - `GET /api/equipment` is a same-origin route handler that proxies the public Express catalogue for the command palette. It requests featured, top-rated listings and returns an empty list with HTTP 503 when the API is unreachable, so the browser never needs `API_URL` and the palette still works offline.
 - `src/lib/data/*` contains server-only queries for equipment, bookings, users, favorites, owners, reviews, categories, and analytics.
 - `src/lib/actions/*` contains server actions for creating bookings and listings, updating profiles, saving favorites, managing bookings, and admin moderation.

@@ -5,8 +5,6 @@ import type { UserRole } from "@/lib/types";
 
 const API_URL = process.env.API_URL ?? "http://localhost:5000";
 
-const API_INTERNAL_KEY = process.env.API_INTERNAL_KEY;
-
 export type SessionUser = {
   id: string;
   role: UserRole;
@@ -29,8 +27,8 @@ function asRole(value: unknown): UserRole {
 }
 
 /**
- * Reads the Better Auth session on the server. The dashboard API trusts the
- * user id only when it arrives together with the shared internal key.
+ * Reads the Better Auth session on the server for route guards. The Express
+ * API is called with a signed JWT instead of the session cookie.
  */
 export async function getSessionUser(): Promise<SessionUser | null> {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -72,39 +70,36 @@ export async function apiFetch<T>(
   if (!user) {
     throw new ApiError("Sign in to continue.", 401);
   }
-  return apiFetchAs<T>(user.id, path, init);
-}
 
-/**
- * Calls the same API with an explicit user id. The internal key still proves
- * the request came from the Next.js server.
- */
-export async function apiFetchAs<T>(
-  userId: string,
-  path: string,
-  init: RequestInit = {},
-): Promise<T> {
-  if (!API_INTERNAL_KEY) {
-    throw new ApiError(
-      "API_INTERNAL_KEY is missing from the client environment.",
-      500,
-    );
-  }
-
+  const token = await getAccessToken();
   return request<T>(path, {
     ...init,
     headers: {
       "content-type": "application/json",
       ...init.headers,
-      "x-internal-key": API_INTERNAL_KEY,
-      "x-user-id": userId,
+      Authorization: `Bearer ${token}`,
     },
   });
 }
 
 /**
- * Public catalogue reads. No session or internal key is needed, and the
- * response is never cached at build time because the Express API may be down.
+ * Mints the short-lived Better Auth JWT for the current session. The token
+ * stays on the Next.js server and is never exposed to the browser.
+ */
+async function getAccessToken(): Promise<string> {
+  try {
+    const result = await auth.api.getToken({ headers: await headers() });
+    if (result?.token) return result.token;
+  } catch {
+    // Fall through to the shared unauthorized error below.
+  }
+
+  throw new ApiError("Sign in to continue.", 401);
+}
+
+/**
+ * Public catalogue reads. No session or token is needed, and the response is
+ * never cached at build time because the Express API may be down.
  */
 export async function apiPublic<T>(
   path: string,
