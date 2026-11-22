@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { apiPublic } from "@/lib/api.server";
 
 export type PlatformStats = {
@@ -29,6 +30,6 @@ export type PlatformStats = {
 };
 
 /** Public counters for the landing and catalogue pages. */
-export async function getPlatformStats(): Promise<PlatformStats> {
+export const getPlatformStats = cache(async function getPlatformStats(): Promise<PlatformStats> {
   return apiPublic<PlatformStats>("/api/stats");
-}
+});

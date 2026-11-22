@@ -27,30 +27,6 @@ const ICONS = {
   chart: ChartNoAxesColumn,
 } as const;
 
-const PERSONAS: Record<
-  DashboardRole,
-  { name: string; initials: string; label: string; email: string }
-> = {
-  customer: {
-    name: "Tanvir Ahmed",
-    initials: "TA",
-    label: "Customer workspace",
-    email: "tanvir.ahmed@example.com",
-  },
-  owner: {
-    name: "Rafiul Islam",
-    initials: "RI",
-    label: "Owner workspace",
-    email: "rafiul.islam@example.com",
-  },
-  admin: {
-    name: "Ayesha Karim",
-    initials: "AK",
-    label: "Admin workspace",
-    email: "ayesha.karim@yardclub.com",
-  },
-};
-
 function roleFromPath(pathname: string): DashboardRole {
   if (pathname.startsWith("/admin")) return "admin";
   if (pathname.startsWith("/owner")) return "owner";
@@ -63,7 +39,7 @@ function isDashboardRole(value: unknown): value is DashboardRole {
 
 function initialsFor(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "YC";
+  if (parts.length === 0) return "—";
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
 }
@@ -79,26 +55,19 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
 
   const liveUser = session?.user as
-    | {
-        name?: string | null;
-        email?: string | null;
-        role?: string | null;
-      }
+    | { name?: string | null; role?: string | null }
     | undefined;
   const sessionRole = isDashboardRole(liveUser?.role) ? liveUser.role : null;
-  const routeRole = roleFromPath(pathname);
-  const role = sessionRole ?? routeRole;
-  const fallbackPersona = PERSONAS[role];
+  const role = sessionRole ?? roleFromPath(pathname);
 
-  const persona =
-    liveUser && sessionRole
-      ? {
-          name: liveUser.name || "Yardclub user",
-          initials: initialsFor(liveUser.name || "Yardclub user"),
-          label: fallbackPersona.label,
-          email: liveUser.email || "",
-        }
-      : fallbackPersona;
+  // Identity is live-session-only. While it is loading or absent the account
+  // stays neutral instead of borrowing a demo persona.
+  const name = liveUser?.name?.trim() || "Account";
+  const persona = {
+    name,
+    initials: liveUser?.name?.trim() ? initialsFor(name) : "—",
+    label: sessionRole ? `${sessionRole} workspace` : "Account workspace",
+  };
 
   const links = dashboardNav[role];
   const root = ROOTS[role];

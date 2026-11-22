@@ -1,7 +1,16 @@
 import Link from "next/link";
 import { Logo } from "@/components/site/logo";
+import { getPlatformStats } from "@/lib/data/stats";
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export default async function AuthLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  // Hide the counters entirely when the public API is unavailable; never show
+  // placeholder numbers in their place.
+  const stats = await getPlatformStats().catch(() => null);
+
   return (
     <div className="grid min-h-svh lg:grid-cols-[0.95fr_1.05fr]">
       <aside className="relative hidden flex-col justify-between overflow-hidden border-r-2 border-ink bg-lime p-10 lg:flex">
@@ -31,22 +40,27 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           </p>
         </div>
 
-        <dl className="relative grid grid-cols-3 gap-4 border-t-2 border-[#060605]/30 pt-6">
-          {[
-            ["24", "Listings"],
-            ["8", "Verified owners"],
-            ["4.8", "Average rating"],
-          ].map(([value, label]) => (
-            <div key={label}>
-              <dt className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink/55">
-                {label}
-              </dt>
-              <dd className="mt-1 font-mono text-2xl font-medium tabular-nums text-[#060605]">
-                {value}
-              </dd>
-            </div>
-          ))}
-        </dl>
+        {stats && (
+          <dl className="relative grid grid-cols-3 gap-4 border-t-2 border-[#060605]/30 pt-6">
+            {[
+              [String(stats.equipment.approved), "Approved equipment"],
+              [String(stats.users.owners), "Owners"],
+              [
+                stats.averageRating > 0 ? stats.averageRating.toFixed(1) : "—",
+                "Average rating",
+              ],
+            ].map(([value, label]) => (
+              <div key={label}>
+                <dt className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink/55">
+                  {label}
+                </dt>
+                <dd className="mt-1 font-mono text-2xl font-medium tabular-nums text-[#060605]">
+                  {value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        )}
       </aside>
 
       <div className="flex min-h-svh flex-col">

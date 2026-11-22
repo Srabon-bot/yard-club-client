@@ -6,7 +6,6 @@ import { CompareTray } from "@/components/compare/compare-tray";
 import { CommandPalette } from "@/components/site/command-palette";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
-import { PreviewRoleProvider } from "@/components/preview-role";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -16,16 +15,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
       enableSystem
       disableTransitionOnChange
     >
-      <PreviewRoleProvider>
-        <CompareProvider>
-          <TooltipProvider delayDuration={250}>
-            {children}
-            <Toaster position="top-center" richColors closeButton />
-            <CompareTray />
-            <CommandPalette />
-          </TooltipProvider>
-        </CompareProvider>
-      </PreviewRoleProvider>
+      <CompareProvider>
+        <TooltipProvider delayDuration={250}>
+          {children}
+          <Toaster position="top-center" richColors closeButton />
+          <CompareTray />
+          <CommandPalette />
+        </TooltipProvider>
+      </CompareProvider>
     </ThemeProvider>
   );
 }

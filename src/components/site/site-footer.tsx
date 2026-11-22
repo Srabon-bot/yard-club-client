@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { XLogo } from "@/components/site/logo";
-import { NewsletterForm } from "@/components/site/newsletter-form";
 import { footerNav } from "@/lib/nav";
 
 export function SiteFooter() {
@@ -31,11 +31,17 @@ export function SiteFooter() {
               Rent the gear, not the storage. Verified owners across Dhaka and
               Chattogram, with a handover checklist on both ends.
             </p>
-            <div className="grid gap-2">
+            <div className="grid justify-items-start gap-2">
               <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/45">
-                One drop a month
+                Questions about a booking?
               </span>
-              <NewsletterForm />
+              <Link
+                href="/contact"
+                className="inline-flex items-center gap-1.5 rounded-md border-2 border-white/25 px-3 py-2 font-mono text-xs uppercase tracking-[0.08em] text-white/80 transition-colors hover:border-lime hover:text-lime"
+              >
+                Get in touch
+                <ArrowRight className="size-3.5" aria-hidden="true" />
+              </Link>
             </div>
           </div>
 
