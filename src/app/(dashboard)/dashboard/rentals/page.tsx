@@ -30,13 +30,20 @@ const STATUSES = ["all", "pending", "upcoming", "active", "completed", "cancelle
 async function CustomerRentalsContent({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; page?: string; requested?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    page?: string;
+    requested?: string;
+    checkoutError?: string;
+  }>;
 }) {
   const sp = await searchParams;
   const rawStatus = typeof sp.status === "string" ? sp.status : "all";
   const status = oneOf(rawStatus, STATUSES, "all");
   const page = positiveInt(sp.page);
   const requested = typeof sp.requested === "string" ? sp.requested : "";
+  const checkoutError =
+    typeof sp.checkoutError === "string" ? sp.checkoutError : "";
 
   const [stats, filteredResult] = await Promise.all([
     getCustomerBookingStats(),
@@ -62,6 +69,16 @@ async function CustomerRentalsContent({
           </Button>
         }
       />
+
+      {checkoutError && (
+        <p
+          role="alert"
+          className="rounded-[8px] border-2 border-destructive bg-destructive/10 px-4 py-3 text-xs leading-relaxed text-destructive"
+        >
+          {checkoutError} You can pay from this booking&apos;s row when checkout
+          is available.
+        </p>
+      )}
 
       {requested && (
         <p
@@ -179,7 +196,12 @@ async function CustomerRentalsContent({
 export default async function CustomerRentalsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; page?: string; requested?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    page?: string;
+    requested?: string;
+    checkoutError?: string;
+  }>;
 }) {
   await requireRole("customer", "/dashboard/rentals");
   return (

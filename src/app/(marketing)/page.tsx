@@ -79,12 +79,17 @@ const steps = [
 ] as const;
 
 export default async function HomePage() {
-  const [featured, categories, owners, reviews, stats] = await Promise.all([
-    getFeaturedEquipment(6),
+  const featured = await getFeaturedEquipment(6);
+  const heroItem = featured[0];
+
+  // The hero's next-open date depends on the featured list, so fetch it in the
+  // same second wave as the other independent catalogue reads.
+  const [categories, owners, reviews, stats, heroNextOpen] = await Promise.all([
     listCategories(),
     listOwners(),
     getFeaturedReviews(4),
     getPlatformStats(),
+    heroItem ? getNextAvailableDate(heroItem.id) : Promise.resolve(undefined),
   ]);
 
   const ticker = [
@@ -107,12 +112,8 @@ export default async function HomePage() {
 
   /* The hero photo is the 20-tonne CAT, so the card has to be the CAT.
      Keep the pairing explicit instead of relying on rating order. */
-  const heroItem = featured[0];
   const heroOwner = heroItem
     ? owners.find((owner) => owner.id === heroItem.ownerId)
-    : undefined;
-  const heroNextOpen = heroItem
-    ? await getNextAvailableDate(heroItem.id)
     : undefined;
 
   return (

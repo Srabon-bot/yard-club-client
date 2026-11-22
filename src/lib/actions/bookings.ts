@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ApiError, apiFetch, getSessionUser } from "@/lib/api.server";
+import { createCheckoutAction } from "@/lib/actions/payments";
 import type { BookingStatus, PaymentStatus } from "@/lib/types";
 
 export type BookingActionState = { ok: true } | { ok: false; error: string };
@@ -34,6 +35,7 @@ export async function createBookingAction(
     notes: value(formData, "notes"),
   };
 
+  let bookingId = "";
   let reference = "";
   try {
     const result = await apiFetch<{
@@ -42,6 +44,7 @@ export async function createBookingAction(
       method: "POST",
       body: JSON.stringify(payload),
     });
+    bookingId = result.item.id;
     reference = result.item.bookingRef ?? result.item.id;
 
     revalidatePath("/dashboard");
@@ -60,7 +63,19 @@ export async function createBookingAction(
     };
   }
 
-  redirect(`/dashboard/rentals?requested=${encodeURIComponent(reference)}`);
+  // Payment follows booking confirmation immediately: open hosted Stripe
+  // Checkout with the freshly created booking id. Never report success if the
+  // checkout session cannot be created.
+  const checkout = await createCheckoutAction(bookingId);
+  if (!checkout.ok) {
+    redirect(
+      `/dashboard/rentals?checkoutError=${encodeURIComponent(
+        `Booking ${reference} was created, but Stripe Checkout could not be opened: ${checkout.error}`,
+      )}`,
+    );
+  }
+
+  redirect(checkout.url);
 }
 
 export async function updateBookingAction(input: {

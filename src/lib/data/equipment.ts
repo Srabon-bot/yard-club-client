@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { ApiError, apiFetch, apiPublic, getSessionUser } from "@/lib/api.server";
 import { isAvailableNow } from "@/lib/equipment";
 import type {
@@ -208,7 +209,9 @@ export async function getFeaturedEquipment(limit = 6): Promise<Equipment[]> {
   return fallback.items;
 }
 
-export async function getEquipmentDetail(
+// React cache dedupes this request-scoped read across generateMetadata and the
+// page render. The underlying apiPublic fetch still uses no-store.
+export const getEquipmentDetail = cache(async function getEquipmentDetail(
   id: string,
 ): Promise<EquipmentDetail | undefined> {
   try {
@@ -221,7 +224,7 @@ export async function getEquipmentDetail(
     }
     throw error;
   }
-}
+});
 
 export async function getEquipmentById(
   id: string,

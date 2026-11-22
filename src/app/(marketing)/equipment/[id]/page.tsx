@@ -27,6 +27,7 @@ import {
   isAvailableNow,
 } from "@/lib/data/equipment";
 import { listFavorites } from "@/lib/data/favorites";
+import { getProfile } from "@/lib/data/users";
 import { formatBDT, formatDate, formatShortDate } from "@/lib/format";
 import { bypassImageOptimization } from "@/lib/images";
 
@@ -62,12 +63,18 @@ export default async function EquipmentDetailPage({
 
   const { item, owner, holds, nextAvailable, today } = detail;
 
-  const [category, related, favorites] = await Promise.all([
+  const [category, related, favorites, profile] = await Promise.all([
     getCategory(item.category),
     getRelatedEquipment(item.id, 3),
     listFavorites(),
+    getProfile(),
   ]);
 
+  const booking = {
+    owner: owner ?? undefined,
+    holds,
+    customer: { contact: profile.phone, address: profile.address },
+  };
   const available = isAvailableNow(item);
   const categoryName = category?.name ?? "Equipment";
   const itemReviews = detail.reviews.slice(0, 2);
@@ -190,6 +197,7 @@ export default async function EquipmentDetailPage({
                   today={today}
                   available={available}
                   anchor="book-mobile"
+                  booking={booking}
                 />
               </div>
 
@@ -343,6 +351,7 @@ export default async function EquipmentDetailPage({
                     nextOpen={nextOpen}
                     today={today}
                     available={available}
+                    booking={booking}
                   />
                 </div>
 
