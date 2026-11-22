@@ -3,7 +3,12 @@ import type { NextRequest } from "next/server";
 
 // Fast, optimistic check only. requireRole() in lib/api.server.ts remains the
 // authoritative session and RBAC guard for every dashboard page and action.
-const SESSION_COOKIES = ["better-auth.session_token", "better-auth.session_data"];
+const SESSION_COOKIES = [
+  "better-auth.session_token",
+  "better-auth.session_data",
+  "__Secure-better-auth.session_token",
+  "__Secure-better-auth.session_data",
+];
 
 export function proxy(request: NextRequest) {
   const hasSession = SESSION_COOKIES.some(
