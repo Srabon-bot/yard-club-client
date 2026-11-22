@@ -64,6 +64,7 @@ The Better Auth JWT is minted with `auth.api.getToken()` inside `src/lib/api.ser
 | `/about`, `/how-it-works`, `/faq`, `/contact` | Marketing and support content. |
 | `/owners/[id]` | Public owner profile and their approved listings. |
 | `/compare` | Side-by-side comparison of saved equipment. |
+| `/payment-success`, `/payment-cancelled` | Stripe Checkout return pages. The success page verifies the session through the Express API before showing the receipt. |
 | `/login`, `/register`, `/forgot-password` | Better Auth screens. The registration form keeps the admin option for the assignment demo. |
 
 `GET /api/stats` and `GET /api/equipment/stats` drive the public counters. Featured equipment falls back to top-rated approved listings when none are flagged.
@@ -73,7 +74,7 @@ The Better Auth JWT is minted with `auth.api.getToken()` inside `src/lib/api.ser
 | Route | Purpose |
 | --- | --- |
 | `/dashboard` | Overview, booking stats, recent rentals, and favorites. |
-| `/dashboard/rentals` | Rental history with status filters, pagination, and request cancellation. |
+| `/dashboard/rentals` | Rental history with status filters, pagination, secure Stripe payment, and request cancellation. |
 | `/dashboard/favorites` | Saved equipment backed by the live favorites API. |
 | `/dashboard/profile` | Update profile fields and password. |
 
@@ -106,8 +107,9 @@ Private routes use `requireRole(roles, next)` from `src/lib/api.server.ts`. Sign
 - `src/lib/api.server.ts` reads the Better Auth session, mints a JWT, and calls the Express API with `Authorization: Bearer <token>`. `apiPublic` is used where no session is required.
 - `GET /api/equipment` is a same-origin route handler that proxies the public Express catalogue for the command palette. It requests featured, top-rated listings and returns an empty list with HTTP 503 when the API is unreachable, so the browser never needs `API_URL` and the palette still works offline.
 - `src/lib/data/*` contains server-only queries for equipment, bookings, users, favorites, owners, reviews, categories, and analytics.
-- `src/lib/actions/*` contains server actions for creating bookings and listings, updating profiles, saving favorites, managing bookings, and admin moderation.
+- `src/lib/actions/*` contains server actions for creating bookings and listings, starting Stripe Checkout, updating profiles, saving favorites, managing bookings, and admin moderation.
 - Booking totals are `pricePerDay × quantity × daysBetween(start, end)`. New requests are saved as `bookingStatus: "pending"` and `paymentStatus: "unpaid"`. Pending, upcoming, and active bookings reserve stock so overlapping requests cannot be accepted.
+- After the owner confirms a booking (`upcoming`), the renter's **Pay now** action starts hosted Stripe Checkout through the Express API. Stripe redirects to `/payment-success`, which re-verifies the session and shows the saved transaction; `/payment-cancelled` lets the renter retry.
 - Favorites are stored in MongoDB through `/api/favorites`. The compare tray stores lightweight item snapshots in `localStorage` and does not depend on mock catalogue data.
 - Root error and loading boundaries live in `src/app/error.tsx` and `src/app/loading.tsx`; the catalogue has a more specific skeleton and error page.
 
@@ -123,8 +125,6 @@ Only `https://i.ibb.co` is allowed through the Next image optimizer. Other remot
 
 This assignment build intentionally does **not** include:
 
-- Better Auth JWT/JWKS issuance or Express `verifyToken`/role middleware. Role checks currently use the session bridge above.
-- Stripe Checkout or webhooks. Payment state is a manual admin field; customers send a request before any payment is enabled.
 - ImgBB upload integration. Listing forms take a direct image URL.
 
 These are deliberate scope decisions, not missing UI wiring.

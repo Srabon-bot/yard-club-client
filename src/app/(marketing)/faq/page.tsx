@@ -29,7 +29,7 @@ const FAQS = [
     questions: [
       {
         q: "When do I pay for a rental?",
-        a: "You send a dated request first; no card is charged at that stage. The owner confirms availability, then payment instructions and the final total are attached to the booking. All quotes are in Bangladeshi Taka (BDT).",
+        a: "You send a dated request first; no card is charged at that stage. Once the owner confirms availability, Pay now appears on the booking and takes you to Stripe Checkout. All quotes are in Bangladeshi Taka (BDT), and the transaction is saved to your rental record.",
       },
       {
         q: "Are security deposits required?",

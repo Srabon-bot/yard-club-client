@@ -76,7 +76,8 @@ export default async function BookEquipmentPage({
               <h1 className="display-2 mt-3 max-w-[18ch]">Hold the dates.</h1>
               <p className="lede mt-3 max-w-[56ch]">
                 {item.name} in {item.location}. Confirm the window and delivery details, then
-                send a request to the owner. No payment is taken yet.
+                send a request to the owner. No payment is taken yet — once the owner
+                confirms, you will pay securely through Stripe.
               </p>
               <BookingAssurance item={item} />
             </div>

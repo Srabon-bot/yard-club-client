@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 export const metadata: Metadata = {
   title: "How It Works",
   description:
-    "The 5-step rental loop on Yardclub: search, check availability, book securely, inspect at handover, and return.",
+    "The 6-step rental loop on Yardclub: search, check availability, request, pay securely with Stripe, inspect at handover, and return.",
 };
 
 const STEPS = [
@@ -39,12 +39,18 @@ const STEPS = [
   },
   {
     step: "04",
+    title: "Pay securely with Stripe",
+    icon: ShieldCheck,
+    desc: "After confirmation, Pay now opens Stripe Checkout for the stored booking total. Your payment status and transaction reference are saved to the rental record.",
+  },
+  {
+    step: "05",
     title: "Delivery & joint handover inspection",
     icon: Handshake,
     desc: "Coordinate delivery or yard pickup directly with the verified owner. Complete a joint equipment condition checklist before taking possession.",
   },
   {
-    step: "05",
+    step: "06",
     title: "Work & smooth return",
     icon: RotateCcw,
     desc: "Put the equipment to work for your job duration. Return it in good order, confirm receipt with the owner, and leave a genuine verified review.",
@@ -87,7 +93,7 @@ export default function HowItWorksPage() {
       <section className="border-b-2 border-ink">
         <div className="container-page py-16">
           <p className="eyebrow">Step by step</p>
-          <h2 className="display-2 mt-2">The five-step rental lifecycle</h2>
+          <h2 className="display-2 mt-2">The six-step rental lifecycle</h2>
 
           <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {STEPS.map((s) => {
