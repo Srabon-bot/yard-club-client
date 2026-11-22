@@ -1,168 +1,162 @@
-# Yardclub Client
+<div align="center">
 
-**Purpose:** Next.js frontend for Yardclub, a role-based equipment rental marketplace where customers browse live listings and book equipment, owners manage their yards, and admins moderate the platform.
+# Yardclub
 
-## Deployment status
+An industrial equipment rental marketplace connecting contractors and individuals with fleet owners across Dhaka — heavy machinery, construction tools, cinema gear, vehicles, agriculture units, and event infrastructure.
 
-Both projects are deployed and connected to their GitHub repositories. Pushes to `main` trigger production deployments automatically.
+[![Live Site](https://img.shields.io/badge/Live%20Site-yardclub--client.vercel.app-a9d800?style=for-the-badge&logo=vercel&logoColor=black)](https://yardclub-client.vercel.app)
+&nbsp;
+[![Live API](https://img.shields.io/badge/Live%20API-yardclub--server.vercel.app-060605?style=for-the-badge&logo=express&logoColor=white)](https://yardclub-server.vercel.app)
+&nbsp;
+[![API Repository](https://img.shields.io/badge/API%20Repo-yard--club--server-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Srabon-bot/yard-club-server)
 
-| Vercel project | Root directory | Runtime | Live URL |
-| --- | --- | --- | --- |
-| Client | `yardclub_client` | Next.js | https://yardclub-client.vercel.app |
-| API | `yardclub-server` | Express via `api/index.ts` + `vercel.json` rewrites | https://yardclub-server.vercel.app |
+</div>
 
-These are the canonical origins used by the environment variables below. Do not substitute preview deployment URLs.
+---
 
-### Assignment-demo admin (not a production feature)
+## Overview
 
-A seeded account exists **only in the shared assignment database** so reviewers can inspect the admin dashboard:
+Heavy equipment and production rentals in Bangladesh are traditionally coordinated through scattered broker networks and fragmented phone calls — availability is unpredictable, pricing is opaque, and rental contracts lack escrow protections. Yardclub provides contractors, filmmakers, event planners, and fleet owners a verified marketplace to list machinery, reserve availability, process instant card payments with Stripe, and manage rentals through dedicated role-based dashboards.
 
-- Email: `admin@yardclub.test`
-- Password: `Admin@123`
+**Live site:** [https://yardclub-client.vercel.app](https://yardclub-client.vercel.app)  
+**Live API:** [https://yardclub-server.vercel.app](https://yardclub-server.vercel.app)
 
-This is an **assignment-demo-only credential**, not a supported production feature and not a registration path. Public signup always creates a `customer` account. In any non-demo deployment, remove or rotate this account and grant elevated roles only through an admin or the one-time CLI promote-admin script described in [`../yardclub-server/README.md`](../yardclub-server/README.md).
+---
 
-## Stack
+## Features
 
-- Next.js 16 App Router, React 19, TypeScript
-- Better Auth with the MongoDB adapter and JWT plugin
-- Tailwind CSS 4 and shadcn/ui (Radix primitives)
-- Lucide icons, Framer Motion, Recharts, Sonner, cmdk
-- date-fns and react-day-picker for booking dates
-- Server-only ImgBB upload route and hosted Stripe Checkout
+- **Industrial Equipment Catalogue:** Browse 6 major equipment categories (Construction, Photography & Cinema, Commercial Vehicles, Agriculture, Electronics & Staging, and Event Infrastructure) with live pricing.
+- **Server-Side Search & Multi-Param Filtering:** Real-time search by keyword or location with category, rental duration (daily, weekly, monthly), price range sliders, availability toggles, and sorting (price low-to-high, high-to-low, newest).
+- **Equipment Details & Specifications:** Inspect detailed mechanical specs, condition grades, operational terms, included operator details, and live availability calendars.
+- **Instant Booking Modal & Stripe Checkout:** Select booking dates and quantities; totals are calculated automatically and redirected to hosted Stripe Checkout for payment.
+- **Role-Based Access Control (RBAC):** Three role tiers (Customer, Equipment Owner, Administrator) with automated JWT token exchange and server-side layout guards (`requireRole`).
+- **Customer Workspace:** Manage personal rental bookings, payment receipts, active rentals, MongoDB-backed favorites shortlist, and profile details.
+- **Fleet Owner Workspace:** Add new equipment listings with ImgBB photo upload, track inventory approval statuses, manage rental requests, and view earnings analytics.
+- **Administrator Console:** Platform-wide oversight: moderate equipment approvals, adjust user roles, supervise rental transactions, and track revenue charts.
+- **Live Analytics Visualizations:** Monthly booking volume, gross revenue bar charts, and category distribution donut charts powered by Recharts.
+- **Comparison Tray:** Interactive multi-item comparison tray cached locally to evaluate machinery side-by-side.
+- **Authentication:** Email & password authentication with strict password validation (min 6 characters, uppercase + lowercase) and optional Google Social Login.
+- **Responsive & Accessible Design:** High-contrast tactical design system in Archivo & Martian Mono, fully responsive across mobile, tablet, and wide desktop displays.
 
-### Required npm packages
+---
 
-Installed with `npm install`. The versions below reflect `package.json`:
+## Tech Stack
 
-| Group | Packages |
-| --- | --- |
-| Framework | `next@16.4.6`, `react@19.3.0`, `react-dom@19.3.0` |
-| Auth and data | `better-auth@^1.7.26`, `@better-auth/mongo-adapter@^1.7.26`, `mongodb@^7.9.0` |
-| UI primitives | `radix-ui@^1.8.1`, `class-variance-authority@^0.7.1`, `cn@^0.5.2`, `shadcn@^4.23.0`, `tw-animate-css@^1.4.0` |
-| Icons, motion, charts, feedback | `lucide-react@^1.75.0`, `framer-motion@^14.14.0`, `recharts@^3.8.0`, `sonner@^2.0.8`, `cmdk@^1.1.1` |
-| Dates and theme | `date-fns@^4.4.0`, `react-day-picker@^10.0.2`, `next-themes@^0.4.6` |
-| Build/dev tooling | `tailwindcss@4.3.3`, `@tailwindcss/turbopack@4.3.3`, `typescript@^5`, `eslint@^9`, `eslint-config-next@16.4.6`, `@types/node`, `@types/react`, `@types/react-dom` |
+| Layer | Technology |
+|---|---|
+| Framework | ![Next.js](https://img.shields.io/badge/Next.js%2016-000000?style=flat-square&logo=nextdotjs&logoColor=white) App Router, React Server Components, Server Actions |
+| UI Library | ![React](https://img.shields.io/badge/React%2019-61DAFB?style=flat-square&logo=react&logoColor=black) |
+| Language | ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white) Strict Type-Checking |
+| Styling | ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS%204-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white) Custom `#a9d800` Lime & `#060605` Ink Palette |
+| Components | ![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-000000?style=flat-square&logo=shadcnui&logoColor=white) ![Radix UI](https://img.shields.io/badge/Radix%20UI-5B5BD6?style=flat-square&logo=radixui&logoColor=white) |
+| Authentication | ![BetterAuth](https://img.shields.io/badge/BetterAuth-6366F1?style=flat-square&logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAxYTUgNSAwIDAgMC01IDV2M0g2YTIgMiAwIDAgMC0yIDJ2MTBhMiAyIDAgMCAwIDIgMmgxMmEyIDIgMCAwIDAgMi0yVjExYTIgMiAwIDAgMC0yLTJoLTFWNmE1IDUgMCAwIDAtNS01em0tMyA1YTMgMyAwIDAgMSA2IDB2M0g5VjZ6Ii8+PC9zdmc+) ![JWT](https://img.shields.io/badge/JWT-D63AFF?style=flat-square&logo=jsonwebtokens&logoColor=white) Email/Password, MongoDB Adapter, Remote JWKS |
+| Database | ![MongoDB](https://img.shields.io/badge/MongoDB%20Atlas-47A248?style=flat-square&logo=mongodb&logoColor=white) Aggregations & Native Driver |
+| Payments | ![Stripe](https://img.shields.io/badge/Stripe-635BFF?style=flat-square&logo=stripe&logoColor=white) Hosted Checkout & Webhook Handlers |
+| Charts & Motion | ![Recharts](https://img.shields.io/badge/Recharts-22B5BF?style=flat-square&logo=recharts&logoColor=white) ![Framer Motion](https://img.shields.io/badge/Framer%20Motion-0055FF?style=flat-square&logo=framer&logoColor=white) |
+| Icons | ![Lucide](https://img.shields.io/badge/Lucide%20React-F56565?style=flat-square&logo=lucide&logoColor=white) |
+| Notifications | ![Sonner](https://img.shields.io/badge/Sonner-F59E0B?style=flat-square&logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik00IDVoMTZhMiAyIDAgMCAxIDIgMnY2YTIgMiAwIDAgMS0yIDJoLTZsLTQgNHYtNEg0YTIgMiAwIDAgMS0yLTJWN2EyIDIgMCAwIDEgMi0yeiIvPjwvc3ZnPg==) |
+| Hosting | ![Vercel](https://img.shields.io/badge/Vercel-000000?style=flat-square&logo=vercel&logoColor=white) Edge CDN & Serverless Runtime |
 
-## Setup
+---
+
+## Routes
+
+### Public Routes
+
+| Route | Page / Function |
+|---|---|
+| `/` | Landing page — Hero, featured listings, categories grid, why choose us, reviews, and how it works |
+| `/equipment` | Full equipment catalogue with real-time search, multi-filters, sorting, and pagination |
+| `/equipment/[id]` | Comprehensive equipment specifications, terms, hold calendar, and booking modal |
+| `/compare` | Side-by-side machinery comparison tray |
+| `/about` | Platform mission, fleet safety standards, and team |
+| `/how-it-works` | Step-by-step rental guide for customers and equipment owners |
+| `/contact` | Dispatch desk, depot locations, and inquiry form |
+| `/faq` | Frequently asked questions regarding insurance, security deposits, and transport |
+| `/login` | Email/password sign-in with role-aware redirection |
+| `/register` | User onboarding with password strength validation |
+| `/payment-success` | Stripe payment verification and booking receipt confirmation |
+| `/payment-cancelled` | Booking cancellation handler with retry options |
+
+### Customer Dashboard (`/dashboard`)
+
+| Route | Page / Function |
+|---|---|
+| `/dashboard` | Customer overview — recent rentals, active bookings, quick stats |
+| `/dashboard/rentals` | Comprehensive booking history with status filters (Upcoming, Active, Completed, Cancelled) |
+| `/dashboard/favorites` | Saved equipment shortlist with instant booking triggers |
+| `/dashboard/profile` | Personal contact details, billing address, and account preferences |
+
+### Owner Dashboard (`/owner`)
+
+| Route | Page / Function |
+|---|---|
+| `/owner` | Fleet overview — total earnings, active units on rent, fleet utilization charts |
+| `/owner/add-equipment` | Multi-step machinery listing form with ImgBB image uploading |
+| `/owner/equipment` | Fleet inventory manager with approval states (Approved, Pending, Rejected) |
+| `/owner/rentals` | Incoming booking requests and rental fulfillment pipeline |
+| `/owner/profile` | Public owner profile, yard address, and dispatch terms |
+
+### Admin Dashboard (`/admin`)
+
+| Route | Page / Function |
+|---|---|
+| `/admin` | Platform metrics — total bookings, gross volume, users, and equipment counts |
+| `/admin/users` | User management table — role adjustments (Customer, Owner, Admin) and account status |
+| `/admin/equipment` | Inventory moderation — approve, reject, feature, edit, or remove listings |
+| `/admin/equipment/[id]/edit` | Universal listing editor regardless of ownership |
+| `/admin/rentals` | Master ledger of all platform rental contracts and payment statuses |
+| `/admin/profile` | Administrator account settings |
+
+---
+
+## Authentication & Security
+
+Signed-in client sessions interact with Better Auth to generate short-lived JWTs, sending them to the Express API as:
+
+```http
+Authorization: Bearer <token>
+```
+
+The Express API cryptographically verifies the token against the client's public JWKS endpoint at `${BETTER_AUTH_URL}/api/auth/jwks`. Route guards in `src/app/(dashboard)/layout.tsx`, `owner/layout.tsx`, and `admin/layout.tsx` enforce role permissions server-side, redirecting unauthenticated visitors to `/login?next=...` and unauthorized roles to their respective dashboards.
+
+---
+
+## Assignment Demo Account
+
+A pre-seeded demonstration account is available for assessment and review:
+
+- **Email:** `admin@yardclub.test`
+- **Password:** `Admin@123`
+
+---
+
+## Local Development
+
+**Prerequisites:** Node.js 20+, a MongoDB Atlas database cluster, and optionally Google Cloud & Stripe test keys.
 
 ```bash
 npm install
-cp .env.example .env
+cp .env.example .env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The Express API must also be running (see `../yardclub-server/README.md`) or `API_URL` must point at a deployed API.
+Open [http://localhost:3000](http://localhost:3000).
 
-### Environment variables
+### Environment Configuration (`.env.local`)
 
-| Name | Purpose |
-| --- | --- |
-| `BETTER_AUTH_SECRET` | Server-only secret used by Better Auth to sign session data and JWTs. Keep the placeholder in `.env.example`; use a long random value in real deployments. |
-| `BETTER_AUTH_URL` | Canonical origin of this Next.js app, used server-side by Better Auth and as the JWT issuer/audience. |
-| `NEXT_PUBLIC_BETTER_AUTH_URL` | Same canonical origin, exposed to the browser auth client for sessions and social redirects. |
-| `BETTER_AUTH_DB_URL` | MongoDB connection string used by Better Auth (the same user data the Express API reads). |
-| `API_URL` | Base URL of the Express API, with no trailing slash. Defaults to `http://localhost:5000` for local development; set it to the deployed API HTTPS origin on Vercel. |
-| `IMGBB_API_KEY` | Server-only ImgBB key used by `POST /api/uploads/imgbb`. Never uses a `NEXT_PUBLIC_` prefix. |
-| `GOOGLE_CLIENT_ID` | Optional. Enables Google sign-in only when paired with the secret below. |
-| `GOOGLE_CLIENT_SECRET` | Optional. Enables Google sign-in only when paired with the ID above. |
+```env
+PORT=3000
+API_URL=http://localhost:5000
 
-> **Origin parity is required:** `BETTER_AUTH_URL`, `NEXT_PUBLIC_BETTER_AUTH_URL` (client) and `CLIENT_URL` (API) must be the **same canonical HTTPS origin with no trailing slash**. `API_URL` must be the deployed API HTTPS origin. A mismatch causes 401 responses and sign-in/session reload failures.
+BETTER_AUTH_URL=http://localhost:3000
+NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000
+BETTER_AUTH_SECRET=your_super_secret_32_char_random_key
+BETTER_AUTH_DB_URL=mongodb+srv://<user>:<password>@cluster.mongodb.net
 
-### Authentication and roles
+IMGBB_API_KEY=your_imgbb_api_key
 
-- Public registration creates **only `customer` accounts**. There is no admin or owner self-registration.
-- Elevated roles are assigned **after** signup by an admin in `/admin/users`, or by the one-time CLI promote-admin script in the server project. The role stored in MongoDB is authoritative, not any role claim in a token.
-- Google sign-in uses a real Better Auth social redirect. The button works only when both `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are configured. Register `${BETTER_AUTH_URL}/api/auth/callback/google` as an authorized redirect URI (locally `http://localhost:3000/api/auth/callback/google`). New Google accounts start as customers.
-- Forgot-password is **not implemented**; its route and link have been removed. Signed-in users can change their password from the profile page.
-
-### Scripts
-
-| Command | Purpose |
-| --- | --- |
-| `npm run dev` | Start the Next.js development server. |
-| `npm run build` | Production build; also runs TypeScript checking. |
-| `npm run start` | Serve the production build. |
-| `npm run lint` | Run ESLint. |
-
-## Route map
-
-### Public
-
-| Route | Purpose |
-| --- | --- |
-| `/` | Live platform counters, featured equipment, categories, and reviews. |
-| `/equipment` | Server-side search, filters, sorting, availability filter, and pagination. |
-| `/equipment/[id]` | Listing detail with a **Book Now** modal that collects dates and quantity and submits the booking. |
-| `/equipment/[id]/book` | Standalone booking form kept as a fallback (customer role only). |
-| `/about`, `/how-it-works`, `/faq`, `/contact` | Marketing and support content. |
-| `/owners/[id]` | Public owner profile and their approved listings. |
-| `/compare` | Side-by-side comparison of saved equipment. |
-| `/payment-success`, `/payment-cancelled` | Stripe Checkout return pages. The success page verifies the session through the Express API before showing the receipt. |
-| `/login`, `/register` | Better Auth email/password screens, both offering Google sign-in when configured. |
-
-`GET /api/stats` and `GET /api/equipment/stats` drive the public counters. Featured equipment falls back to top-rated approved listings when none are flagged.
-
-### Customer dashboard
-
-| Route | Purpose |
-| --- | --- |
-| `/dashboard` | Overview, booking stats, recent rentals, and favorites. |
-| `/dashboard/rentals` | Rental history with status filters, pagination, Stripe payment state, and request cancellation. |
-| `/dashboard/favorites` | Saved equipment backed by the live favorites API. |
-| `/dashboard/profile` | Update profile fields and password. |
-
-### Owner dashboard
-
-| Route | Purpose |
-| --- | --- |
-| `/owner` | Fleet analytics, earnings, bookings, and recent listings. |
-| `/owner/add-equipment` | Create a listing; it starts as `pending`. |
-| `/owner/equipment` | Filter owned listings by approval status, edit details, and delete unused ones. |
-| `/owner/equipment/[id]/edit` | Edit an owned listing, including pending and rejected rows. |
-| `/owner/rentals` | Confirm, start, complete, or decline rental requests for owned equipment. |
-| `/owner/profile` | Update owner details shown on the public profile. |
-
-### Admin dashboard
-
-| Route | Purpose |
-| --- | --- |
-| `/admin` | Platform-wide analytics, pending approvals, and recent activity. |
-| `/admin/users` | Search users and change role or account status; this is where `owner` and `admin` roles are granted. |
-| `/admin/equipment` | Approve, reject, unlist, feature, edit, or delete any listing. |
-| `/admin/equipment/[id]/edit` | Edit any listing regardless of owner or approval status. |
-| `/admin/rentals` | Manage every booking and its payment status. |
-| `/admin/profile` | Update the admin account. |
-
-Private routes use `requireRole(roles, next)` from `src/lib/api.server.ts`. Signed-out visitors go to `/login?next=...`; users in the wrong role return to their own dashboard.
-
-## How live data works
-
-- `src/lib/api.server.ts` reads the Better Auth session, mints a short-lived JWT with `auth.api.getToken()`, and calls the Express API with `Authorization: Bearer <token>`. The browser never stores or reads that token. The browser auth client uses `NEXT_PUBLIC_BETTER_AUTH_URL`, so the origin parity rule above is essential.
-- `GET /api/equipment` is a same-origin route handler that proxies the public Express catalogue for the command palette. It requests featured, top-rated listings and returns an empty list with HTTP 503 when the API is unreachable, so the browser never needs `API_URL` and the palette still works offline.
-- `src/lib/data/*` contains server-only queries for equipment, bookings, users, favorites, owners, reviews, categories, and analytics.
-- `src/lib/actions/*` contains server actions for creating bookings and starting Stripe Checkout immediately afterwards, creating listings, updating profiles, saving favorites, managing bookings, and admin moderation.
-- Signed-in users can upload listing and profile images through `POST /api/uploads/imgbb`. The route keeps the ImgBB key server-side and returns the hosted `i.ibb.co` URL saved in MongoDB. A direct hosted image URL is also accepted by the forms.
-- Booking totals are `pricePerDay × quantity × daysBetween(start, end)`. Submitting a booking from the modal (or the fallback page) creates it as `pending` and **immediately starts hosted Stripe Checkout**; the renter is redirected to Stripe. `/payment-success` re-verifies the session through the API, while the signed Stripe webhook is the authoritative writer of payment records. Verification is idempotent, and `/payment-cancelled` lets the renter retry. Owners still handle fulfilment, but payment does not wait for owner confirmation.
-- Favorites are stored in MongoDB through `/api/favorites`. The compare tray stores lightweight item snapshots in `localStorage` and does not depend on mock catalogue data.
-- Root error and loading boundaries live in `src/app/error.tsx` and `src/app/loading.tsx`; the catalogue has a more specific skeleton and error page.
-
-### Cache Components
-
-Next.js 16 Cache Components are enabled. Session-backed and live-data segments set `export const instant = false` in `src/app/(dashboard)/layout.tsx` and `src/app/(marketing)/layout.tsx`. This is the documented migration path for routes that read request-time session or API data instead of prerendering it.
-
-### Images
-
-Only `https://i.ibb.co` is allowed through the Next image optimizer. Other remote URLs render with `unoptimized` via `bypassImageOptimization()` in `src/lib/images.ts`.
-
-## Deploying to Vercel
-
-1. Create the **API** project with root directory `yardclub-server`. The server's `api/index.ts` is the serverless entry and `vercel.json` rewrites requests to the Express app. Set the API environment variables from [`../yardclub-server/README.md`](../yardclub-server/README.md) and deploy it first.
-2. Create the **client** project with root directory `yardclub_client` (Next.js preset). Set the variables above, in particular `API_URL` to the deployed API HTTPS origin and all three canonical-origin variables to the client HTTPS origin.
-3. Register `https://yardclub-server.vercel.app/api/payments/webhook` in Stripe and put its signing secret in `STRIPE_WEBHOOK_SECRET` on the API project, then redeploy.
-4. If using Google sign-in, register `https://yardclub-client.vercel.app/api/auth/callback/google` in Google Cloud and set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` on the client project.
-5. Verify `GET https://yardclub-server.vercel.app/api/health` and a signed-in session on `https://yardclub-client.vercel.app`. Both Vercel projects are connected to their GitHub repositories, so later pushes to `main` redeploy automatically.
-
-## Scope note
-
-All assignment features use live data: there is no mock catalogue, placeholder Google sign-in, or simulated payment. Forgot-password and admin self-registration are intentionally out of scope.
+# Optional Social Authentication
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+```
