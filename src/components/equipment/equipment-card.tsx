@@ -3,7 +3,7 @@ import { ArrowUpRight, MapPin, ShieldCheck, Star } from "lucide-react";
 import { CompareToggle } from "@/components/compare/compare-toggle";
 import { DetailLink } from "@/components/equipment/detail-link";
 import { StatusBadge } from "@/components/site/status-badge";
-import { formatBDT } from "@/lib/format";
+import { formatBDT, formatRating } from "@/lib/format";
 import { bypassImageOptimization } from "@/lib/images";
 import type { Equipment, Owner } from "@/lib/types";
 
@@ -101,7 +101,7 @@ export function EquipmentCard({
           )}
           <span className="ml-auto inline-flex shrink-0 items-center gap-1 font-mono text-[10px]">
             <Star className="size-3 fill-lime text-ink" aria-hidden="true" />
-            {item.rating.toFixed(1)}
+            {formatRating(item.rating)}
             <span className="text-ink-soft">({item.reviewCount})</span>
           </span>
         </div>

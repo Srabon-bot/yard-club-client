@@ -10,13 +10,14 @@ export function StarRating({
   className?: string;
   size?: "sm" | "md";
 }) {
-  const filled = Math.round(value);
+  const filled = Math.round(typeof value === "number" && Number.isFinite(value) ? value : 0);
   const icon = size === "md" ? "size-4" : "size-3.5";
+  const safeValue = typeof value === "number" && Number.isFinite(value) ? value : 0;
 
   return (
     <span
       role="img"
-      aria-label={`${value.toFixed(1)} out of 5`}
+      aria-label={`${safeValue.toFixed(1)} out of 5`}
       className={cn("inline-flex items-center gap-0.5", className)}
     >
       {Array.from({ length: 5 }).map((_, index) => (

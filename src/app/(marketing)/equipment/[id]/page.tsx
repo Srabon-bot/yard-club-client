@@ -28,7 +28,7 @@ import {
 } from "@/lib/data/equipment";
 import { listFavorites } from "@/lib/data/favorites";
 import { getProfile } from "@/lib/data/users";
-import { formatBDT, formatDate, formatShortDate } from "@/lib/format";
+import { formatBDT, formatDate, formatRating, formatShortDate } from "@/lib/format";
 import { bypassImageOptimization } from "@/lib/images";
 
 export async function generateMetadata({
@@ -148,7 +148,7 @@ export default async function EquipmentDetailPage({
               <div className="mt-3 flex items-center gap-2">
                 <StarRating value={item.rating} />
                 <span className="font-mono text-xs tabular-nums">
-                  {item.rating.toFixed(1)}
+                  {formatRating(item.rating)}
                 </span>
                 <span className="text-xs text-ink-soft">
                   ({item.reviewCount} reviews)
@@ -304,7 +304,7 @@ export default async function EquipmentDetailPage({
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-2xl font-medium tabular-nums">
-                      {item.rating.toFixed(1)}
+                      {formatRating(item.rating)}
                     </span>
                     <StarRating value={item.rating} size="md" />
                     <span className="text-xs text-ink-soft">
@@ -342,7 +342,7 @@ export default async function EquipmentDetailPage({
                   </div>
                 ) : (
                   <p className="mt-4 rounded-[10px] border border-ink/15 bg-surface p-4 text-sm text-ink-soft">
-                    No written reviews on this listing yet. The owner has a {item.rating.toFixed(1)}
+                    No written reviews on this listing yet. The owner has a {formatRating(item.rating)}
                     {" "}average across {item.reviewCount} completed rentals.
                   </p>
                 )}

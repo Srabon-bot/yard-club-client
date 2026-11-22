@@ -1,10 +1,17 @@
 export const formatBDT = (value: number) =>
-  `BDT ${value.toLocaleString("en-BD", { maximumFractionDigits: 0 })}`;
+  `BDT ${(typeof value === "number" ? value : 0).toLocaleString("en-BD", { maximumFractionDigits: 0 })}`;
 
 export const formatCompactBDT = (value: number) => {
-  if (value >= 1_000_000) return `BDT ${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000) return `BDT ${Math.round(value / 1_000)}k`;
-  return formatBDT(value);
+  const numeric = typeof value === "number" && Number.isFinite(value) ? value : 0;
+  if (numeric >= 1_000_000) return `BDT ${(numeric / 1_000_000).toFixed(1)}M`;
+  if (numeric >= 1_000) return `BDT ${Math.round(numeric / 1_000)}k`;
+  return formatBDT(numeric);
+};
+
+/** Safe rating label — falls back to "New" when the API omits the value. */
+export const formatRating = (value: number | null | undefined): string => {
+  const numeric = typeof value === "number" && Number.isFinite(value) ? value : 0;
+  return numeric > 0 ? numeric.toFixed(1) : "New";
 };
 
 export const formatDate = (value: string) =>

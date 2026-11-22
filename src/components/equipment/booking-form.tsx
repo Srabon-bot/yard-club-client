@@ -350,7 +350,7 @@ export function BookingForm({
             </p>
             <p className="mt-1.5 text-xs leading-relaxed text-ink-soft">
               {owner.responseTime || "under 30 min"} response ·{" "}
-              {owner.rating != null ? `${owner.rating.toFixed(1)} from ` : ""}
+              {typeof owner.rating === "number" && Number.isFinite(owner.rating) ? `${owner.rating.toFixed(1)} from ` : ""}
               {owner.reviewCount ?? 0} rentals.
             </p>
           </div>
