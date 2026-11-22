@@ -18,33 +18,10 @@ import { GoogleButton } from "@/components/auth/login-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
-import type { UserRole } from "@/lib/types";
 import { authClient } from "@/lib/auth-client";
-
-type Role = UserRole; // "customer" | "owner" | "admin"
-
-const ROLES: { value: Role; label: string; note: string }[] = [
-  {
-    value: "customer",
-    label: "Customer",
-    note: "Rent equipment.",
-  },
-  {
-    value: "owner",
-    label: "Owner",
-    note: "List equipment.",
-  },
-  {
-    value: "admin",
-    label: "Admin",
-    note: "Manage platform.",
-  },
-];
 
 export function RegisterForm() {
   const router = useRouter();
-  const [role, setRole] = useState<Role>("customer");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -87,7 +64,6 @@ export function RegisterForm() {
         email,
         password,
         image: photoUrl || undefined,
-        role,
         phone,
       });
 
@@ -99,22 +75,11 @@ export function RegisterForm() {
         return;
       }
 
-      toast.success("Account created successfully!", {
-        description:
-          role === "admin"
-            ? "Welcome to Yardclub. Opening admin dashboard."
-            : role === "owner"
-              ? "Welcome to Yardclub. Opening owner yard dashboard."
-              : "Welcome to Yardclub. Opening customer dashboard.",
+      toast.success("Customer account created successfully!", {
+        description: "Welcome to Yardclub. Opening your dashboard.",
       });
 
-      if (role === "admin") {
-        router.push("/admin");
-      } else if (role === "owner") {
-        router.push("/owner");
-      } else {
-        router.push("/dashboard");
-      }
+      router.push("/dashboard");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Something went wrong during sign up.";
       toast.error("Sign up error", { description: message });
@@ -125,65 +90,10 @@ export function RegisterForm() {
 
   return (
     <div className="grid gap-5">
-      <div className="grid gap-2">
-        <div className="flex items-center justify-between">
-          <Label className="text-xs font-semibold">
-            Select account role
-          </Label>
-          <span className="font-mono text-[9px] uppercase tracking-[0.08em] text-ink-soft">
-            Determines your dashboard & permissions
-          </span>
-        </div>
-        <div
-          role="radiogroup"
-          aria-label="Account role"
-          className="grid grid-cols-3 gap-2"
-        >
-          {ROLES.map((option) => {
-            const active = role === option.value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                role="radio"
-                aria-checked={active}
-                onClick={() => setRole(option.value)}
-                className={cn(
-                  "rounded-[8px] border-2 border-ink p-2.5 text-left transition-colors",
-                  active
-                    ? "bg-lime text-[#060605] shadow-offset-sm"
-                    : "bg-surface text-ink-soft hover:bg-secondary hover:text-foreground",
-                )}
-              >
-                <span className="font-heading text-xs font-extrabold tracking-[-0.02em] sm:text-sm">
-                  {option.label}
-                </span>
-                <span
-                  className={cn(
-                    "mt-0.5 block text-[10px] leading-snug sm:text-[11px]",
-                    active ? "text-black/70" : "text-ink-soft",
-                  )}
-                >
-                  {option.note}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <GoogleButton
-        label={
-          role === "admin"
-            ? "Sign up with Google (Customer)"
-            : role === "owner"
-              ? "Continue with Google"
-              : "Sign up with Google"
-        }
-      />
+      <GoogleButton label="Continue with Google" />
 
       <p className="text-center font-mono text-[9px] uppercase tracking-[0.08em] text-ink-soft">
-        Google sign-up defaults to a customer account
+        Google sign-in creates a customer account by default
       </p>
 
       <div className="flex items-center gap-3" aria-hidden="true">
@@ -209,7 +119,7 @@ export function RegisterForm() {
               name="name"
               required
               autoComplete="name"
-              placeholder="Tanvir Ahmed"
+              placeholder="Your full name"
               className="h-11 rounded-[6px] border-2 border-ink bg-surface pl-9 text-sm"
             />
           </div>
@@ -333,13 +243,7 @@ export function RegisterForm() {
         </label>
 
         <Button type="submit" disabled={loading} className="h-12 w-full text-base">
-          {loading
-            ? "Creating account…"
-            : role === "admin"
-              ? "Create admin account"
-              : role === "owner"
-                ? "Create owner account"
-                : "Create customer account"}
+          {loading ? "Creating account…" : "Create customer account"}
           {!loading && <ArrowRight className="size-4" aria-hidden="true" />}
         </Button>
       </form>

@@ -33,23 +33,58 @@ export function GoogleMark({ className }: { className?: string }) {
   );
 }
 
-export function GoogleButton({ label }: { label: string }) {
-  const router = useRouter();
+export function GoogleButton({
+  label = "Continue with Google",
+}: {
+  label?: string;
+}) {
+  const [loading, setLoading] = useState(false);
+
+  const handleGoogle = async () => {
+    setLoading(true);
+
+    try {
+      const result = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/dashboard",
+      });
+
+      if (result.error) {
+        const raw = result.error.message ?? "";
+        const message = /not found|not configured/i.test(raw)
+          ? "Google sign-in is not configured on this server. Contact the site owner."
+          : raw || "Google could not sign you in. Try again.";
+        toast.error("Google sign-in unavailable", { description: message });
+        return;
+      }
+
+      if (!result.data?.url) {
+        toast.error("Google sign-in could not start", {
+          description: "The server did not return a Google sign-in page.",
+        });
+      }
+      // On success Better Auth sends the browser to Google itself. No success
+      // toast or client-side navigation is faked here.
+    } catch (error: unknown) {
+      toast.error("Google sign-in failed", {
+        description:
+          error instanceof Error ? error.message : "Could not open Google sign-in.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Button
       type="button"
       variant="outline"
-      onClick={() => {
-        toast.success("Signed in with Google", {
-          description: "Continuing to the customer dashboard.",
-        });
-        router.push("/dashboard");
-      }}
+      onClick={handleGoogle}
+      disabled={loading}
       className="h-12 w-full border-2 border-ink bg-surface text-sm font-semibold"
     >
       <GoogleMark className="size-4" />
-      {label}
+      {loading ? "Opening Google…" : label}
     </Button>
   );
 }
@@ -133,7 +168,7 @@ export function LoginForm() {
 
   return (
     <div className="grid gap-5">
-      <GoogleButton label="Continue with Google" />
+      <GoogleButton />
 
       <p className="text-center font-mono text-[9px] uppercase tracking-[0.08em] text-ink-soft">
         Google creates a customer account by default
@@ -170,17 +205,9 @@ export function LoginForm() {
         </div>
 
         <div className="grid gap-1.5">
-          <div className="flex items-center justify-between gap-2">
-            <Label htmlFor="login-password" className="text-xs font-semibold">
-              Password
-            </Label>
-            <Link
-              href="/forgot-password"
-              className="font-mono text-[9px] uppercase tracking-[0.08em] text-ink-soft underline decoration-ink/30 decoration-2 underline-offset-4 transition-colors hover:text-foreground hover:decoration-ink"
-            >
-              Forgot?
-            </Link>
-          </div>
+          <Label htmlFor="login-password" className="text-xs font-semibold">
+            Password
+          </Label>
           <div className="relative">
             <LockKeyhole
               className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-soft"

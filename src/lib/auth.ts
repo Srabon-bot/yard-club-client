@@ -3,7 +3,19 @@ import { jwt } from "better-auth/plugins";
 import { MongoClient } from "mongodb";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
 
-const client = new MongoClient(process.env.BETTER_AUTH_DB_URL as string);
+const dbUrl = process.env.BETTER_AUTH_DB_URL;
+if (!dbUrl) {
+  throw new Error(
+    "BETTER_AUTH_DB_URL is missing. Set a MongoDB connection string in the server environment before starting the app.",
+  );
+}
+if (!/^mongodb(\+srv)?:\/\//.test(dbUrl)) {
+  throw new Error(
+    "BETTER_AUTH_DB_URL must be a mongodb:// or mongodb+srv:// connection string.",
+  );
+}
+
+const client = new MongoClient(dbUrl);
 const db = client.db("yardclubDB");
 const baseURL = (
   process.env.BETTER_AUTH_URL || "http://localhost:3000"
@@ -12,6 +24,7 @@ const baseURL = (
 export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
+    minPasswordLength: 6,
   },
   user: {
     additionalFields: {
@@ -19,12 +32,23 @@ export const auth = betterAuth({
         type: "string",
         required: true,
         defaultValue: "customer",
-        input: true,
+        // Roles are assigned by admins after sign-up, never by the browser.
+        input: false,
       },
       phone: {
         type: "string",
         required: false,
         input: true,
+      },
+    },
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          // Direct API calls must not be able to create owners or admins.
+          return { data: { ...user, role: "customer" } };
+        },
       },
     },
   },
