@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Panel } from "@/components/dashboard/parts";
+import { ImageUploadField } from "@/components/site/image-upload-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -312,20 +313,14 @@ export function EquipmentForm({
 
       <Panel title="Image & terms">
         <div className="grid gap-4">
-          <FieldGroup
-            label="Equipment image URL"
-            htmlFor="eq-image"
-            note="Direct image URL or imgbb upload link"
-          >
-            <Input
-              id="eq-image"
-              name="image"
-              required
-              defaultValue={initialValues?.image ?? ""}
-              placeholder="https://i.ibb.co/... or https://..."
-              className="h-11 rounded-[6px] border-2 border-ink bg-background text-sm"
-            />
-          </FieldGroup>
+          <ImageUploadField
+            id="eq-image"
+            name="image"
+            label="Equipment image"
+            note="Upload with ImgBB or paste a hosted image URL"
+            defaultValue={initialValues?.image ?? ""}
+            required
+          />
 
           <FieldGroup label="Rental terms & conditions" htmlFor="eq-terms">
             <Textarea

@@ -39,6 +39,7 @@ Open [http://localhost:3000](http://localhost:3000). The Express API must also b
 | `BETTER_AUTH_URL` | Public URL of this Next.js app. |
 | `BETTER_AUTH_DB_URL` | MongoDB connection string used by Better Auth. |
 | `API_URL` | Base URL of the Express API. Defaults to `http://localhost:5000`. |
+| `IMGBB_API_KEY` | Server-only ImgBB key used by `/api/uploads/imgbb`. Never use a `NEXT_PUBLIC_` prefix here. |
 | `GOOGLE_CLIENT_ID` | Optional. Enables Google sign-in when paired with the secret below. |
 | `GOOGLE_CLIENT_SECRET` | Optional. Enables Google sign-in when paired with the ID above. |
 
@@ -108,6 +109,7 @@ Private routes use `requireRole(roles, next)` from `src/lib/api.server.ts`. Sign
 - `GET /api/equipment` is a same-origin route handler that proxies the public Express catalogue for the command palette. It requests featured, top-rated listings and returns an empty list with HTTP 503 when the API is unreachable, so the browser never needs `API_URL` and the palette still works offline.
 - `src/lib/data/*` contains server-only queries for equipment, bookings, users, favorites, owners, reviews, categories, and analytics.
 - `src/lib/actions/*` contains server actions for creating bookings and listings, starting Stripe Checkout, updating profiles, saving favorites, managing bookings, and admin moderation.
+- Signed-in users can upload listing and profile images through `POST /api/uploads/imgbb`. The route keeps the ImgBB key server-side and returns the hosted `i.ibb.co` URL saved in MongoDB.
 - Booking totals are `pricePerDay × quantity × daysBetween(start, end)`. New requests are saved as `bookingStatus: "pending"` and `paymentStatus: "unpaid"`. Pending, upcoming, and active bookings reserve stock so overlapping requests cannot be accepted.
 - After the owner confirms a booking (`upcoming`), the renter's **Pay now** action starts hosted Stripe Checkout through the Express API. Stripe redirects to `/payment-success`, which re-verifies the session and shows the saved transaction; `/payment-cancelled` lets the renter retry.
 - Favorites are stored in MongoDB through `/api/favorites`. The compare tray stores lightweight item snapshots in `localStorage` and does not depend on mock catalogue data.
@@ -121,10 +123,6 @@ Next.js 16 Cache Components are enabled. Session-backed and live-data segments s
 
 Only `https://i.ibb.co` is allowed through the Next image optimizer. Other remote URLs render with `unoptimized` via `bypassImageOptimization()` in `src/lib/images.ts`.
 
-## Scope notes
+## Scope note
 
-This assignment build intentionally does **not** include:
-
-- ImgBB upload integration. Listing forms take a direct image URL.
-
-These are deliberate scope decisions, not missing UI wiring.
+All assignment features are wired to live data. Registration still accepts either a hosted image URL or an ImgBB URL, as allowed by the brief; listing and profile forms provide direct ImgBB upload.
