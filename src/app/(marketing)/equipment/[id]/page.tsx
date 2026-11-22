@@ -391,7 +391,7 @@ export default async function EquipmentDetailPage({
                           Rating
                         </dt>
                         <dd className="mt-0.5 font-mono text-xs tabular-nums">
-                          {owner.rating.toFixed(1)} ({owner.reviewCount})
+                          {owner.rating != null ? owner.rating.toFixed(1) : "New"} {owner.reviewCount != null ? `(${owner.reviewCount})` : ""}
                         </dd>
                       </div>
                       <div>
@@ -399,7 +399,7 @@ export default async function EquipmentDetailPage({
                           Replies
                         </dt>
                         <dd className="mt-0.5 font-mono text-xs">
-                          {owner.responseTime}
+                          {owner.responseTime || "under 30 min"}
                         </dd>
                       </div>
                     </dl>

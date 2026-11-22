@@ -349,8 +349,9 @@ export function BookingForm({
               Supplied by {owner.name}
             </p>
             <p className="mt-1.5 text-xs leading-relaxed text-ink-soft">
-              {owner.responseTime} response · {owner.rating.toFixed(1)} from{" "}
-              {owner.reviewCount} rentals.
+              {owner.responseTime || "under 30 min"} response ·{" "}
+              {owner.rating != null ? `${owner.rating.toFixed(1)} from ` : ""}
+              {owner.reviewCount ?? 0} rentals.
             </p>
           </div>
         )}

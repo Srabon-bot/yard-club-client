@@ -90,7 +90,7 @@ export default async function OwnerProfilePage({
                 </span>
                 <span className="flex items-center gap-1 font-mono text-lg font-bold">
                   <Star className="size-4 fill-amber-400 text-amber-400" />
-                  {owner.rating.toFixed(1)}
+                  {owner.rating != null ? owner.rating.toFixed(1) : "New"}
                 </span>
               </div>
               <div className="flex items-center justify-between border-t border-ink/10 pt-2 text-xs">

@@ -554,12 +554,12 @@ export default async function HomePage() {
                     {owner.location}
                   </p>
                   <div className="mt-4 flex items-center gap-2">
-                    <StarRating value={owner.rating} />
+                    <StarRating value={owner.rating ?? 0} />
                     <span className="font-mono text-[10px] tabular-nums">
-                      {owner.rating.toFixed(1)}
+                      {owner.rating != null ? owner.rating.toFixed(1) : "New"}
                     </span>
                     <span className="font-mono text-[9px] text-ink-soft">
-                      ({owner.reviewCount})
+                      ({owner.reviewCount ?? 0})
                     </span>
                   </div>
                   <p className="mt-auto pt-4 font-mono text-[9px] uppercase tracking-[0.08em] text-ink-soft">
