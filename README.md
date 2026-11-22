@@ -4,14 +4,14 @@
 
 ## Deployment status
 
-Vercel configuration is ready for a **two-project** deployment, but deployment has not been performed yet. There are no live URLs at the time of writing.
+Both projects are deployed and connected to their GitHub repositories. Pushes to `main` trigger production deployments automatically.
 
 | Vercel project | Root directory | Runtime | Live URL |
 | --- | --- | --- | --- |
-| Client | `yardclub_client` | Next.js | Fill in after deployment |
-| API | `yardclub-server` | Express via `api/index.ts` + `vercel.json` rewrites | Fill in after deployment |
+| Client | `yardclub_client` | Next.js | https://yardclub-client.vercel.app |
+| API | `yardclub-server` | Express via `api/index.ts` + `vercel.json` rewrites | https://yardclub-server.vercel.app |
 
-Do not invent or hard-code preview URLs. After both projects are deployed, record the exact HTTPS origins here and use those same values in the environment variables below.
+These are the canonical origins used by the environment variables below. Do not substitute preview deployment URLs.
 
 ### Assignment-demo admin (not a production feature)
 
@@ -159,9 +159,9 @@ Only `https://i.ibb.co` is allowed through the Next image optimizer. Other remot
 
 1. Create the **API** project with root directory `yardclub-server`. The server's `api/index.ts` is the serverless entry and `vercel.json` rewrites requests to the Express app. Set the API environment variables from [`../yardclub-server/README.md`](../yardclub-server/README.md) and deploy it first.
 2. Create the **client** project with root directory `yardclub_client` (Next.js preset). Set the variables above, in particular `API_URL` to the deployed API HTTPS origin and all three canonical-origin variables to the client HTTPS origin.
-3. Register `https://<api-origin>/api/payments/webhook` in Stripe and put its signing secret in `STRIPE_WEBHOOK_SECRET` on the API project, then redeploy.
-4. If using Google sign-in, register `https://<client-origin>/api/auth/callback/google` in Google Cloud and set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` on the client project.
-5. Verify `GET /api/health` on the API project and a signed-in session on the client. Fill the actual origins into the deployment-status table at the top of this README.
+3. Register `https://yardclub-server.vercel.app/api/payments/webhook` in Stripe and put its signing secret in `STRIPE_WEBHOOK_SECRET` on the API project, then redeploy.
+4. If using Google sign-in, register `https://yardclub-client.vercel.app/api/auth/callback/google` in Google Cloud and set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` on the client project.
+5. Verify `GET https://yardclub-server.vercel.app/api/health` and a signed-in session on `https://yardclub-client.vercel.app`. Both Vercel projects are connected to their GitHub repositories, so later pushes to `main` redeploy automatically.
 
 ## Scope note
 
