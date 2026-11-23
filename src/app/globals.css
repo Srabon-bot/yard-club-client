@@ -120,6 +120,19 @@
   --danger-soft: var(--red-100);
   --danger-text: var(--red-800);
 
+  /* Toast bridge — Sonner reads these instead of its own pastel defaults. */
+  --toast-bg: var(--surface);
+  --toast-fg: var(--ink);
+  --toast-border: var(--ink);
+  --toast-success-bg: var(--success-soft);
+  --toast-success-fg: var(--success-text);
+  --toast-info-bg: var(--lime-soft);
+  --toast-info-fg: var(--lime-ink);
+  --toast-warning-bg: var(--warning-soft);
+  --toast-warning-fg: var(--warning-text);
+  --toast-error-bg: var(--danger-soft);
+  --toast-error-fg: var(--danger-text);
+
   --chart-1: var(--lime-800);
   --chart-2: var(--cobalt-600);
   --chart-3: var(--red-500);
@@ -182,6 +195,18 @@
   --warning-text: var(--amber-300);
   --danger-soft: var(--red-950);
   --danger-text: var(--red-300);
+
+  --toast-bg: var(--surface);
+  --toast-fg: var(--ink);
+  --toast-border: var(--ink);
+  --toast-success-bg: var(--success-soft);
+  --toast-success-fg: var(--success-text);
+  --toast-info-bg: var(--lime-soft);
+  --toast-info-fg: var(--lime-ink);
+  --toast-warning-bg: var(--warning-soft);
+  --toast-warning-fg: var(--warning-text);
+  --toast-error-bg: var(--danger-soft);
+  --toast-error-fg: var(--danger-text);
 
   --chart-1: var(--lime-500);
   --chart-2: var(--cobalt-300);
@@ -484,6 +509,20 @@
     transform: translate(var(--hover-lift), var(--hover-lift));
     box-shadow: 6px 6px 0 var(--ink);
   }
+}
+
+/* Sonner toasts share the site's card geometry: hard ink rule, offset shadow. */
+[data-sonner-toast].cn-toast[data-styled='true'] {
+  border-width: var(--border-ink);
+  border-style: solid;
+  box-shadow: var(--shadow-offset-sm);
+  font-family: var(--font-body);
+  padding: 12px 14px;
+}
+
+[data-sonner-toast].cn-toast [data-description] {
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 /* Loading toast progress bar — matches the lime/ink system. */

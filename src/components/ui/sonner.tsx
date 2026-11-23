@@ -30,10 +30,25 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       style={
         {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
+          // Sonner's built-in light/dark palette is pastel; point every toast
+          // type at the site's semantic tokens so success/error/info/warning
+          // all follow the same mode-aware ink + paper system.
+          "--normal-bg": "var(--toast-bg)",
+          "--normal-text": "var(--toast-fg)",
+          "--normal-border": "var(--toast-border)",
+          "--success-bg": "var(--toast-success-bg)",
+          "--success-text": "var(--toast-success-fg)",
+          "--success-border": "var(--toast-border)",
+          "--info-bg": "var(--toast-info-bg)",
+          "--info-text": "var(--toast-info-fg)",
+          "--info-border": "var(--toast-border)",
+          "--warning-bg": "var(--toast-warning-bg)",
+          "--warning-text": "var(--toast-warning-fg)",
+          "--warning-border": "var(--toast-border)",
+          "--error-bg": "var(--toast-error-bg)",
+          "--error-text": "var(--toast-error-fg)",
+          "--error-border": "var(--toast-border)",
+          "--border-radius": "var(--radius-card)",
         } as React.CSSProperties
       }
       toastOptions={{
