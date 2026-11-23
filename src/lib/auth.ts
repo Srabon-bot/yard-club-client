@@ -51,7 +51,6 @@ if (!/^mongodb(\+srv)?:\/\//.test(dbUrl)) {
 }
 
 declare global {
-  // eslint-disable-next-line no-var
   var _mongoAuthClient: MongoClient | undefined;
 }
 

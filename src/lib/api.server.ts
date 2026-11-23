@@ -53,10 +53,11 @@ export async function getSessionUser(): Promise<SessionUser | null> {
       id: String(user.id),
       role: asRole(user.role),
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // During Next.js static prerendering, headers() intentionally throws a HANGING_PROMISE_REJECTION
     // to signal the prerender runner that dynamic data was requested. Do not log this expected signal.
-    if (error?.digest !== "HANGING_PROMISE_REJECTION") {
+    const digest = (error as { digest?: string } | null | undefined)?.digest;
+    if (digest !== "HANGING_PROMISE_REJECTION") {
       console.error("Failed to read session user:", error);
     }
     return null;
