@@ -90,8 +90,9 @@ export const auth = betterAuth({
         type: "string",
         required: true,
         defaultValue: "customer",
-        // Roles are assigned by admins after sign-up, never by the browser.
-        input: false,
+        // Owners may self-register from the email sign-up form; Google always
+        // lands on the customer default.
+        input: true,
       },
       phone: {
         type: "string",
@@ -104,8 +105,11 @@ export const auth = betterAuth({
     user: {
       create: {
         before: async (user) => {
-          // Direct API calls must not be able to create owners or admins.
-          return { data: { ...user, role: "customer" } };
+          // Email sign-ups may choose the owner role; Google always defaults to
+          // the customer role, and only customer/owner are open for self-service.
+          const role = String((user as { role?: unknown }).role ?? "customer");
+          const safeRole = role === "owner" ? "owner" : "customer";
+          return { data: { ...user, role: safeRole } };
         },
       },
     },

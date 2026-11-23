@@ -24,6 +24,7 @@ export function RegisterForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [role, setRole] = useState<"customer" | "owner">("customer");
 
   const handleRegister = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -65,6 +66,7 @@ export function RegisterForm() {
         password,
         image: photoUrl || undefined,
         phone,
+        role,
       });
 
       if (result.error) {
@@ -75,9 +77,15 @@ export function RegisterForm() {
         return;
       }
 
-      toast.success("Customer account created successfully!", {
-        description: "Welcome to Yardclub. Opening your dashboard.",
-      });
+      toast.success(
+        role === "owner" ? "Owner account created successfully!" : "Customer account created successfully!",
+        {
+          description:
+            role === "owner"
+              ? "Welcome to Yardclub. List your first piece of equipment."
+              : "Welcome to Yardclub. Opening your dashboard.",
+        },
+      );
 
       router.push("/dashboard");
     } catch (err: unknown) {
@@ -186,6 +194,25 @@ export function RegisterForm() {
           </div>
           <p className="font-mono text-[9px] uppercase tracking-[0.06em] text-ink-soft">
             Direct link or ImgBB uploaded image URL
+          </p>
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label htmlFor="register-role" className="text-xs font-semibold">
+            Account type
+          </Label>
+          <select
+            id="register-role"
+            value={role}
+            onChange={(e) => setRole(e.target.value as "customer" | "owner")}
+            className="h-11 rounded-[6px] border-2 border-ink bg-surface px-3 text-sm font-medium outline-none"
+          >
+            <option value="customer">Customer — rent equipment</option>
+            <option value="owner">Owner — list equipment for rent</option>
+          </select>
+          <p className="font-mono text-[9px] uppercase tracking-[0.06em] text-ink-soft">
+            Owners can list equipment after registration; elevated roles are
+            assigned by an administrator.
           </p>
         </div>
 
