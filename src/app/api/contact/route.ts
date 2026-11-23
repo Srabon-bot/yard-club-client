@@ -21,8 +21,6 @@ export async function POST(request: Request) {
   const body = (payload ?? {}) as Record<string, unknown>;
   const name = typeof body.name === "string" ? (body.name as string).trim() : "";
   const email = typeof body.email === "string" ? (body.email as string).trim() : "";
-  const phone = typeof body.phone === "string" ? (body.phone as string).trim() : "";
-  const topic = typeof body.topic === "string" ? (body.topic as string).trim() : "";
   const message = typeof body.message === "string" ? (body.message as string).trim() : "";
 
   if (!name || !email || !EMAIL_PATTERN.test(email) || !message) {
