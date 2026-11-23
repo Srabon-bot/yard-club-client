@@ -87,7 +87,7 @@ export function RegisterForm() {
         },
       );
 
-      router.push("/dashboard");
+      router.push(role === "owner" ? "/owner" : "/dashboard");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Something went wrong during sign up.";
       toast.error("Sign up error", { description: message });
