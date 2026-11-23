@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Logo } from "@/components/site/logo";
 import { getPlatformStats } from "@/lib/data/stats";
 
+export const dynamic = "force-dynamic";
+
 export default async function AuthLayout({
   children,
 }: {

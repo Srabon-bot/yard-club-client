@@ -2,8 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  cacheComponents: true,
-  partialPrefetching: false,
+  cacheComponents: false,
   images: {
     remotePatterns: [{ protocol: "https", hostname: "i.ibb.co" }],
     contentDispositionType: "attachment",
