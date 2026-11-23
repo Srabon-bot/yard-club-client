@@ -116,16 +116,6 @@ export function BookingActions({
           {scope === "customer" ? "Cancel request" : "Decline"}
         </Button>
       )}
-      {scope === "admin" && (bookingStatus === "cancelled" || bookingStatus === "completed") && (
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={pending}
-          onClick={() => run({ bookingStatus: "pending" })}
-        >
-          Reopen
-        </Button>
-      )}
       {scope === "admin" && paymentStatus && (
         <div className="flex items-center gap-1">
           <select
