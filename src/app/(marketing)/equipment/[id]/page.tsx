@@ -31,6 +31,8 @@ import { getProfile } from "@/lib/data/users";
 import { formatBDT, formatDate, formatRating, formatShortDate } from "@/lib/format";
 import { bypassImageOptimization } from "@/lib/images";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({
   params,
 }: PageProps<"/equipment/[id]">): Promise<Metadata> {
