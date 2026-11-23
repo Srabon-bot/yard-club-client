@@ -9,6 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
+import {
+  dismissLoadingToast,
+  showLoadingToast,
+} from "@/components/site/route-loading-toast";
 
 export function GoogleMark({ className }: { className?: string }) {
   return (
@@ -42,6 +46,7 @@ export function GoogleButton({
 
   const handleGoogle = async () => {
     setLoading(true);
+    showLoadingToast("Opening Google…");
 
     try {
       const result = await authClient.signIn.social({
@@ -50,6 +55,7 @@ export function GoogleButton({
       });
 
       if (result.error) {
+        dismissLoadingToast();
         const raw = result.error.message ?? "";
         const message = /not found|not configured/i.test(raw)
           ? "Google sign-in is not configured on this server. Contact the site owner."
@@ -59,6 +65,7 @@ export function GoogleButton({
       }
 
       if (!result.data?.url) {
+        dismissLoadingToast();
         toast.error("Google sign-in could not start", {
           description: "The server did not return a Google sign-in page.",
         });
@@ -66,6 +73,7 @@ export function GoogleButton({
       // On success Better Auth sends the browser to Google itself. No success
       // toast or client-side navigation is faked here.
     } catch (error: unknown) {
+      dismissLoadingToast();
       toast.error("Google sign-in failed", {
         description:
           error instanceof Error ? error.message : "Could not open Google sign-in.",
@@ -121,6 +129,7 @@ export function LoginForm() {
     }
 
     setLoading(true);
+    showLoadingToast("Signing you in…");
 
     try {
       const result = await authClient.signIn.email({
@@ -130,6 +139,7 @@ export function LoginForm() {
       });
 
       if (result.error) {
+        dismissLoadingToast();
         toast.error("Sign in failed", {
           description:
             result.error.message || "Invalid credentials. Please verify your email and password.",
@@ -158,6 +168,7 @@ export function LoginForm() {
         router.push("/dashboard");
       }
     } catch (err: unknown) {
+      dismissLoadingToast();
       const message =
         err instanceof Error ? err.message : "Something went wrong during sign in.";
       toast.error("Sign in error", { description: message });

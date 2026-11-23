@@ -486,6 +486,28 @@
   }
 }
 
+/* Loading toast progress bar — matches the lime/ink system. */
+@keyframes yc-loading-sweep {
+  from {
+    transform: translateX(-110%);
+  }
+  to {
+    transform: translateX(330%);
+  }
+}
+
+.yc-loading-sweep {
+  animation: yc-loading-sweep 1.15s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yc-loading-sweep {
+    animation: none;
+    width: 100%;
+    opacity: 0.45;
+  }
+}
+
 /* Receipts should print as paper, not as a screenshot of the site. */
 @media print {
   @page {

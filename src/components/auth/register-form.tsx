@@ -19,6 +19,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
+import {
+  dismissLoadingToast,
+  showLoadingToast,
+} from "@/components/site/route-loading-toast";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -58,6 +62,7 @@ export function RegisterForm() {
     }
 
     setLoading(true);
+    showLoadingToast("Creating your account…");
 
     try {
       const result = await authClient.signUp.email({
@@ -70,6 +75,7 @@ export function RegisterForm() {
       });
 
       if (result.error) {
+        dismissLoadingToast();
         toast.error("Registration failed", {
           description: result.error.message || "An error occurred while creating your account.",
         });
@@ -89,6 +95,7 @@ export function RegisterForm() {
 
       router.push(role === "owner" ? "/owner" : "/dashboard");
     } catch (err: unknown) {
+      dismissLoadingToast();
       const message = err instanceof Error ? err.message : "Something went wrong during sign up.";
       toast.error("Sign up error", { description: message });
     } finally {
