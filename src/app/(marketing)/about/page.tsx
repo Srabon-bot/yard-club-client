@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, MapPin, Shield, Star, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getPlatformStats } from "@/lib/data/stats";
+import { listEquipment } from "@/lib/data/equipment";
 import { formatCompactBDT } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -49,6 +50,13 @@ export default async function AboutPage() {
     },
     { label: "Registered users", value: stats.users.total.toLocaleString() },
   ];
+
+  const coverage = await Promise.all(
+    ["Dhaka", "Chattogram"].map(async (city) => ({
+      city,
+      listings: (await listEquipment({ location: city, perPage: 1 })).total,
+    })),
+  );
 
   return (
     <>
@@ -165,7 +173,7 @@ export default async function AboutPage() {
               </p>
             </div>
             <div className="grid gap-4 content-start">
-              {["Dhaka", "Chattogram"].map((city) => (
+              {coverage.map(({ city, listings }) => (
                 <div
                   key={city}
                   className="flex items-center gap-4 rounded-[10px] border-2 border-ink bg-surface px-5 py-4 shadow-offset-sm"
@@ -174,7 +182,9 @@ export default async function AboutPage() {
                   <div>
                     <p className="font-semibold">{city}</p>
                     <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-soft">
-                      {city === "Dhaka" ? "Active · 20+ listings" : "Active · 4+ listings"}
+                      {listings > 0
+                        ? `Active · ${listings} listing${listings === 1 ? "" : "s"}`
+                        : "No active listings"}
                     </p>
                   </div>
                 </div>
