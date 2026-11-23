@@ -136,18 +136,18 @@ function buildAuth() {
     session: {
       cookieCache: {
         enabled: true,
-        // "compact" is signed with BETTER_AUTH_SECRET alone, so reading a
-        // session from the cookie cache never needs MongoDB. The "jwt"
-        // strategy verifies through JWKS keys stored in the database, which
-        // made every get-session call fail whenever Mongo was unreachable and
-        // logged legitimate users out of private routes.
-        strategy: "compact",
+        // Keep the JWT strategy so cookies issued by earlier deployments stay
+        // valid. Session failures were caused by a cached MongoDB topology
+        // being closed, not by the cookie format; getAuth() now rebuilds that
+        // connection whenever it dies.
+        strategy: "jwt",
         maxAge: 5 * 24 * 60 * 60,
       },
     },
     plugins: [
       jwt({
-        // The JWT plugin otherwise mints a DB-backed token on every
+        sessionCookieCache: true,
+        // The JWT plugin otherwise mints an extra DB-backed token on every
         // /get-session response. Routes only need the JWT when calling the
         // Express API, which requests it explicitly through getToken().
         disableSettingJwtHeader: true,
