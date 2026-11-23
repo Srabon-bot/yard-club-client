@@ -1,7 +1,42 @@
 import { betterAuth } from "better-auth";
+import { hashPassword, verifyPassword } from "better-auth/crypto";
+import { APIError } from "@better-auth/core/error";
 import { jwt } from "better-auth/plugins";
 import { MongoClient } from "mongodb";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
+
+const MIN_PASSWORD_LENGTH = 6;
+const MAX_PASSWORD_LENGTH = 128;
+
+/**
+ * Assignment rule: passwords must be at least 6 characters long and contain
+ * at least one uppercase letter and one lowercase letter. Better Auth only
+ * exposes min/max length natively, so strength is enforced through a custom
+ * password hash hook, which runs before any user/credential is written.
+ */
+function assertPasswordStrength(password: string) {
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    throw new APIError("BAD_REQUEST", {
+      message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`,
+    });
+  }
+  if (password.length > MAX_PASSWORD_LENGTH) {
+    throw new APIError("BAD_REQUEST", {
+      message: `Password must be at most ${MAX_PASSWORD_LENGTH} characters long.`,
+    });
+  }
+  if (!/[A-Z]/.test(password) || !/[a-z]/.test(password)) {
+    throw new APIError("BAD_REQUEST", {
+      message:
+        "Password must contain at least one uppercase letter (A-Z) and one lowercase letter (a-z).",
+    });
+  }
+}
+
+const passwordHash = async (password: string) => {
+  assertPasswordStrength(password);
+  return hashPassword(password);
+};
 
 const dbUrl = process.env.BETTER_AUTH_DB_URL;
 if (!dbUrl) {
@@ -44,7 +79,11 @@ const baseURL = (
 export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
-    minPasswordLength: 6,
+    minPasswordLength: MIN_PASSWORD_LENGTH,
+    password: {
+      hash: passwordHash,
+      verify: verifyPassword,
+    },
   },
   user: {
     additionalFields: {
