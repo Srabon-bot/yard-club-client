@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getAuth } from "@/lib/auth";
 import type { UserRole } from "@/lib/types";
 
 const API_URL = process.env.API_URL ?? "http://localhost:5000";
@@ -42,7 +42,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
       return null;
     }
 
-    const session = await auth.api.getSession({ headers: requestHeaders });
+    const session = await getAuth().api.getSession({ headers: requestHeaders });
     if (!session?.user) return null;
 
     const user = session.user as typeof session.user & {
@@ -108,7 +108,7 @@ export async function apiFetch<T>(
  */
 async function getAccessToken(): Promise<string> {
   try {
-    const result = await auth.api.getToken({ headers: await headers() });
+    const result = await getAuth().api.getToken({ headers: await headers() });
     if (result?.token) return result.token;
   } catch {
     // Fall through to the shared unauthorized error below.

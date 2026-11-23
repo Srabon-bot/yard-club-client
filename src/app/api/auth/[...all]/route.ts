@@ -1,8 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getAuth } from "@/lib/auth";
 import { toNextJsHandler } from "better-auth/next-js";
 
-const handler = toNextJsHandler(auth);
+// Resolve the auth instance per request so a recycled MongoDB topology results
+// in a fresh handler instead of a permanently broken warm-lambda instance.
+const nextHandler = (request: NextRequest) =>
+  toNextJsHandler(getAuth()).GET(request);
 
 const PWD_REGEX_UPPER = /[A-Z]/;
 const PWD_REGEX_LOWER = /[a-z]/;
@@ -40,9 +43,8 @@ async function POST(request: NextRequest) {
     }
   }
 
-  return handler.POST(request);
+  return toNextJsHandler(getAuth()).POST(request);
 }
 
-const { GET } = handler;
-
-export { GET, POST };
+export const GET = nextHandler;
+export { POST };
