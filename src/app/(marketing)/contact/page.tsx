@@ -27,17 +27,37 @@ export default function ContactPage() {
   const [topic, setTopic] = useState(TOPICS[0]);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const form = e.currentTarget;
+      const data = new FormData(form);
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        body: data,
+      });
+      const result = (await response.json().catch(() => null)) as {
+        error?: { message?: string };
+      } | null;
+      if (!response.ok) {
+        toast.error("Message could not be sent.", {
+          description: result?.error?.message ?? "Please try again.",
+        });
+        return;
+      }
       toast.success("Message sent successfully!", {
         description:
           "Our operations desk will respond within 2 hours during active support hours.",
       });
-      (e.target as HTMLFormElement).reset();
-    }, 800);
+      form.reset();
+    } catch {
+      toast.error("Message could not be sent.", {
+        description: "Network error — please try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
