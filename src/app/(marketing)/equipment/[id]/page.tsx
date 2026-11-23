@@ -31,6 +31,8 @@ import { getProfile } from "@/lib/data/users";
 import { formatBDT, formatDate, formatRating, formatShortDate } from "@/lib/format";
 import { bypassImageOptimization } from "@/lib/images";
 
+export const prefetch = "force-disabled";
+
 export async function generateMetadata({
   params,
 }: PageProps<"/equipment/[id]">): Promise<Metadata> {
