@@ -17,6 +17,7 @@ export function ImageUploadField({
   placeholder = "https://i.ibb.co/... or direct image link",
   defaultValue = "",
   required = false,
+  onValueChange,
 }: {
   id?: string;
   name?: string;
@@ -25,10 +26,16 @@ export function ImageUploadField({
   placeholder?: string;
   defaultValue?: string;
   required?: boolean;
+  onValueChange?: (value: string) => void;
 }) {
   const [url, setUrl] = useState(defaultValue);
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const updateUrl = (next: string) => {
+    setUrl(next);
+    onValueChange?.(next);
+  };
 
   const upload = async (file?: File) => {
     if (!file) return;
@@ -49,7 +56,7 @@ export function ImageUploadField({
         throw new Error(result.error || "Image upload failed.");
       }
 
-      setUrl(result.url);
+      updateUrl(result.url);
       toast.success("Image uploaded");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Image upload failed.");
@@ -108,7 +115,7 @@ export function ImageUploadField({
           value={url}
           required={required}
           placeholder={placeholder}
-          onChange={(event) => setUrl(event.target.value)}
+          onChange={(event) => updateUrl(event.target.value)}
           className="h-11 rounded-[6px] border-2 border-ink bg-background text-sm"
         />
       </div>

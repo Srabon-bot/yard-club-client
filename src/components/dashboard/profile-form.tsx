@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useActionState } from "react";
+import { useEffect, useRef, useState, useActionState } from "react";
 import { Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { ImageUploadField } from "@/components/site/image-upload-field";
@@ -23,11 +23,25 @@ export function ProfileForm({ user }: { user: User }) {
     updateProfileAction,
     undefined,
   );
+  const imageRef = useRef(user.image ?? "");
+  const nameRef = useRef(user.name);
 
   useEffect(() => {
     if (!state) return;
-    if (state.ok) toast.success(state.message);
-    else toast.error(state.error);
+    if (!state.ok) {
+      toast.error(state.error);
+      return;
+    }
+    toast.success(state.message);
+
+    // The header avatar and account name come from Better Auth's session, which
+    // is served from a 5-day cookie cache. Re-apply the saved values through
+    // Better Auth so the cache is refreshed without forcing a re-login.
+    void authClient
+      .updateUser({ image: imageRef.current, name: nameRef.current })
+      .catch(() => {
+        // Best effort: the profile itself was already saved successfully.
+      });
   }, [state]);
 
   return (
@@ -48,6 +62,9 @@ export function ProfileForm({ user }: { user: User }) {
             label="Hosted image URL"
             note="Upload with ImgBB or paste a hosted image URL"
             defaultValue={user.image ?? ""}
+            onValueChange={(value) => {
+              imageRef.current = value;
+            }}
             placeholder="https://i.ibb.co/... or direct image link"
           />
         </div>
@@ -72,6 +89,9 @@ export function ProfileForm({ user }: { user: User }) {
               id="profile-name"
               name="name"
               defaultValue={user.name}
+              onChange={(event) => {
+                nameRef.current = event.target.value;
+              }}
               className="h-11 rounded-[6px] border-2 border-ink bg-background text-sm"
             />
           </div>
